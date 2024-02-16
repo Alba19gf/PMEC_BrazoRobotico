@@ -14,6 +14,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  std::cout << "MAIN: Prueba compilación" << std::endl;
 }
 
 // put function definitions here:
