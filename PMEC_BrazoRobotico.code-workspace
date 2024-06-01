@@ -5,9 +5,13 @@
 			"path": "."
 		}
 	],
+<<<<<<< HEAD
 	"settings": {
 		"files.associations": {
 			"new": "cpp"
 		}
 	}
+=======
+	"settings": {}
+>>>>>>> 0131d2e687cf24149704c2174ceff6295174a4da
 }

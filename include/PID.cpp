@@ -5,6 +5,7 @@ PID::PID()
 {
     PID::setK(-1.0, -2.0, -3.0);
     PID::setP(1.0, 2.0, 3.0);
+<<<<<<< HEAD
 
     if((DEBUG & DEBUG_INFO != 0) && (DEBUG & DEBUG_PID != 0))
     {
@@ -22,12 +23,16 @@ PID::PID(float Kp, float Ki, float Kd)
         Serial.printf("PID initialized with 2nd constructor... \n");
         PID::displayInfo();
     }
+=======
+    Serial.printf("1st constructor... \n");
+>>>>>>> 0131d2e687cf24149704c2174ceff6295174a4da
 }
 
 PID::PID(float Kp, float Ki, float Kd, float dt, float max, float min)
 {
     PID::setK(Kp, Ki, Kd);
     PID::setP(dt, max, min);
+<<<<<<< HEAD
 
     if((DEBUG & DEBUG_INFO != 0) && (DEBUG & DEBUG_PID != 0))
     {
@@ -70,6 +75,10 @@ int PID::setMin(float min)
 {
     _min = min;
     return 0;
+=======
+    Serial.printf("PID initialized with 2nd constructor... \n");
+    PID::displayInfo();
+>>>>>>> 0131d2e687cf24149704c2174ceff6295174a4da
 }
 
 int PID::setK(float Kp, float Ki, float Kd)
@@ -108,6 +117,7 @@ float PID::calc(float currentValue, float desiredValue)
 
     _pre_error = error;
 
+<<<<<<< HEAD
     if(DEBUG & DEBUG_PID != 0)
     {
         if(DEBUG & DEBUG_PLOT != 0)
@@ -128,6 +138,10 @@ float PID::calc(float currentValue, float desiredValue)
             //Serial.printf("desPos: %f, currPos: %f, error: %f, _pre_error: %f\n", desiredValue, currentValue, error, _pre_error);
         }
     }
+=======
+    Serial.printf("PID: %f, P: %f, I: %f, D:%f \t###", PID, P, I, D);
+    Serial.printf("desPos: %f, currPos: %f, error: %f, _pre_error: %f\n", desiredValue, currentValue, error, _pre_error);
+>>>>>>> 0131d2e687cf24149704c2174ceff6295174a4da
 
     return PID;
 }
