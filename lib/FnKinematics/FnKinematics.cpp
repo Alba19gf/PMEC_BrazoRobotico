@@ -142,6 +142,35 @@ std::vector<float> Tlineal(float x_inicio, float y_inicio, float z_inicio, float
     return angs_salida;
 }
 
+float** arrayTLineal(float x_inicio, float y_inicio, float z_inicio, float x_fin, float y_fin, float z_fin) {
+ // Conocida la posición incial y final se realiza un bucle para dividir la recta que las une en num_pasos
+    float x_pasos[num_pasos];
+    float y_pasos[num_pasos];
+    float z_pasos[num_pasos];
+
+    // Array de salida
+    float** angulos = new float*[num_pasos];
+    // Inicializamos el array de salida
+    for (int i = 0; i < num_pasos; ++i) {
+        angulos[i] = new float[3];
+    }
+
+    // Asignamos los valores del array de salida
+        for (int i = 0; i < num_pasos; ++i) {
+            x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
+            y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
+            z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasos - 1);
+
+            struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
+
+            angulos[i][0] = angles.uno;
+            angulos[i][1] = angles.dos;
+            angulos[i][2] = angles.tres;
+        }
+
+    return angulos;
+}
+
 std::vector<float> Telipse(float x_inicio, float y_inicio, float x_fin, float y_fin) {
     // Se divide la trayectoria elíptica en num_pasos y se calcula la cinemática inversa para cada uno de ellos
     std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos);
