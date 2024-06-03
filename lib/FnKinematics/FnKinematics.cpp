@@ -2,15 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <iostream>
+#include <vector>
 #include "FnKinematics.h"
 
+#define L1 275
+#define L2 255
+#define L3 280
+
 #define PI 3.141592
+#define num_pasos 50
+#define z_amplitud 80
 
 // FUNCIÓN QUE REALIZA LA CINEMÁTICA DIRECTA DEL ROBOT
 //
 // dados los ángulos del robot en grados y las dimensiones principales de los eslabones en mm calcula la cinemática directa
 // devolviendo la posición en el espacio XYZ del TCP
-struct nums FnDirKinem(float ang_b, float ang_s, float ang_e, float L1, float L2, float L3)
+struct nums FnDirKinem(float ang_b, float ang_s, float ang_e)
 {
     // Se inicializan las variables a utilizar
     float P1[2], P2[2], P3[2], x, y, z, w;
@@ -38,6 +46,10 @@ struct nums FnDirKinem(float ang_b, float ang_s, float ang_e, float L1, float L2
     x = w*sin(ang_b);
     y = w*cos(ang_b);
 
+    TCP.uno = x;
+    TCP.dos = y;
+    TCP.tres = z;
+
     return TCP;
 }
 
@@ -45,7 +57,7 @@ struct nums FnDirKinem(float ang_b, float ang_s, float ang_e, float L1, float L2
 //
 // dada la posición XYZ en el espacio de la punta de la herramienta y las dimensiones principales del robot en mm calcula
 // la cinemática inversa devolviendo los ángulos del robot correspondientes a dicha posición
-struct nums FnInvKinem(float x, float y, float z, float L1, float L2, float L3)
+struct nums FnInvKinem(float x, float y, float z)
 {
     // Se inicializan las variables a utilizar
     float P1[2], P2[2], P3[2], t[2], ang_b, ang_s, ang_e, w, a, b, c, d;
@@ -104,5 +116,89 @@ struct nums FnInvKinem(float x, float y, float z, float L1, float L2, float L3)
     ang_s = ang_s*360/(2*PI);
     ang_e = ang_e*360/(2*PI);
 
+    angulos.uno = ang_b;
+    angulos.dos = ang_s;
+    angulos.tres = ang_e;
+
     return angulos;
 }
+
+std::vector<float> Tlineal(float x_inicio, float y_inicio, float z_inicio, float x_fin, float y_fin, float z_fin) {
+    // Conocida la posición incial y final se realiza un bucle para dividir la recta que las une en num_pasos
+    std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos), z_pasos(num_pasos);
+    std::vector<float> angs_salida(3*num_pasos);
+
+        for (int i = 0; i < num_pasos; ++i) {
+            x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
+            y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
+            z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasos - 1);
+
+            struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
+
+            angs_salida[3*i] = angles.uno;
+            angs_salida[3*i+1] = angles.dos;
+            angs_salida[3*i+2] = angles.tres;
+        }
+        return angs_salida;
+}
+
+std::vector<float> Telipse(float x_inicio, float y_inicio, float x_fin, float y_fin) {
+    // Se divide la trayectoria elíptica en num_pasos y se calcula la cinemática inversa para cada uno de ellos
+    std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos);
+    std::vector<float> angs_salida(3*num_pasos);
+
+    for (int i = 0; i < num_pasos; ++i) {
+        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
+        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
+
+        float t = static_cast<float>(i) / (num_pasos - 1) * 2;
+        float z_intermedio;
+        if ((0 < t) && (t <= 2)) {
+            float angle = (t / 2) * PI;
+            z_intermedio = z_amplitud * sin(angle);
+        } else {
+            z_intermedio = 0;
+        }
+
+        // Cálculo de los ángulos para las posiciones intermedias
+        struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_intermedio);
+;
+        angs_salida[3*i] = angles.uno;
+        angs_salida[3*i+1] = angles.dos;
+        angs_salida[3*i+2] = angles.tres;
+    }   
+    return angs_salida;
+}
+
+
+// HAY QUE VER CÓMO SE INTEGRAN FINALMENTE ESTAS FUNCIONES, SI SERÍAN PARTE DE LA CINEMÁTICA O HABRÍA QUE INTEGRARLAS DENTRO DEL BUCLE PRINCIPAL
+
+// std::vector<float> Rest(float x_inicio, float y_inicio) {
+//     // LLAMADA A LOS ENCÓDERS PARA CONOCER LOS ÁNGULOS ACTUALES
+//     float ang_b = 20;   // AQUÍ PONDRÍAMOS LAS LECTURAS DE LOS ENCÓDERS
+//     float ang_s = 10;
+//     float ang_e = 80;
+//     struct nums posi = FnDirKinem(ang_b, ang_s, ang_e);
+//     float xTCP = posi.uno;
+//     float yTCP = posi.dos;
+//     float zTCP = posi.tres;
+//     Tlineal(xTCP, yTCP, zTCP, xTCP, yTCP, zTCP+20);
+//     Tlineal(xTCP, yTCP, zTCP+20, 0, 250, 40);
+// }
+
+// std::vector<float> Approach(float x, float y) {
+//     // Función que aproxima la herramienta al tablero en la posición incial deseada para el movimiento
+//     // Se trazaría una líne recta desde la posición de reposo a una posición superior a la posición deseada
+//     Tlineal(0, 250, 40, x, y, -120);
+//     Tlineal(x, y, -120, x, y, -140);
+// }
+
+// std::vector<float> MovRobot(float x_inicio, float y_inicio, float x_fin, float y_fin) {
+//     Approach(x_inicio, y_inicio);
+//     // CIERRE DE LA PINZA
+//     Tlineal(x_inicio, y_inicio, -140, x_inicio, y_fin, -120);
+//     // Trayectoria elípitica (ver si se puede utilizar para una altura que no sea la del tablero)ç
+//     Tlineal(x_fin, y_fin, -120, x_fin, y_fin, -140);
+//     // APERTURA DE LA PINZA 
+//     Rest(x_fin, y_fin);
+// }

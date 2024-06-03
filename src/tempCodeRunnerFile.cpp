@@ -1,5 +1,1 @@
-struct nums{
-    float uno;
-    float dos;
-    float tres;
-};
+ 103.547684, (float) 284.494995, (float) 90.822144, (float) 275.0, (float) 255.0, (float

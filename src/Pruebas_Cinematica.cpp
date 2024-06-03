@@ -2,22 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "../lib/FnKinematics/FnKinematics.h"
+#include <vector>
+#include <iostream>
+#include "../lib/FnKinematics/FnKinematics.cpp"
 
-int main() {
-    float xTCP, yTCP, zTCP, ang_b, ang_s, ang_e;
+int main(){ 
+    std::vector<float> angulos1(3*num_pasos), angulos2(3*num_pasos);
 
-    struct nums posTCP = FnDirKinem((float) 20.0, (float) 10.0, (float) 80.0, (float) 275.0, (float) 255.0, (float) 180.0);
-    struct nums GDL = FnInvKinem((float) 103.547684, (float) 284.494995, (float) 90.822144, (float) 275.0, (float) 255.0, (float) 180.0);
+    angulos1 = Tlineal(0, 230, -140, 50, 300, 20);
+    angulos2 = Telipse(-80, 250, 50, 300);
 
-    xTCP = posTCP.uno;
-    yTCP = posTCP.dos;
-    zTCP = posTCP.tres;
-
-    ang_b = GDL.uno;
-    ang_s = GDL.dos;
-    ang_e = GDL.tres;
-
-    printf("\nLa posicion del TCP es: X=%f \t Y=%f \t Z=%f \n", xTCP, yTCP, zTCP);
-    printf("Los angulos son: BASE=%f \t HOMBRO=%f \t CODO=%f \n", ang_b, ang_s, ang_e);
+    printf("TLINEAL: %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", angulos1[0], angulos1[1], angulos1[2], angulos1[3], angulos1[4], angulos1[5], angulos1[6], angulos1[7], angulos1[8]);
+    printf("TELIPSE: %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", angulos2[0], angulos2[1], angulos2[2], angulos2[3], angulos2[4], angulos2[5], angulos2[6], angulos2[7], angulos2[8]);
 }
