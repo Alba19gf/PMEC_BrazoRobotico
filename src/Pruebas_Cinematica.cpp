@@ -6,7 +6,7 @@
 #include <iostream>
 #include "../lib/FnKinematics/FnKinematics.cpp"
 
-int main(){ 
+int main() { 
     std::vector<float> angulos1(3*num_pasos), angulos2(3*num_pasos);
 
     angulos1 = Tlineal(0, 230, -140, 50, 300, 20);

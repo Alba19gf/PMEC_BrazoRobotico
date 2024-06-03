@@ -139,7 +139,7 @@ std::vector<float> Tlineal(float x_inicio, float y_inicio, float z_inicio, float
             angs_salida[3*i+1] = angles.dos;
             angs_salida[3*i+2] = angles.tres;
         }
-        return angs_salida;
+    return angs_salida;
 }
 
 std::vector<float> Telipse(float x_inicio, float y_inicio, float x_fin, float y_fin) {
