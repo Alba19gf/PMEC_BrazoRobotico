@@ -18,8 +18,7 @@
 //
 // dados los ángulos del robot en grados y las dimensiones principales de los eslabones en mm calcula la cinemática directa
 // devolviendo la posición en el espacio XYZ del TCP
-struct nums FnDirKinem(float ang_b, float ang_s, float ang_e)
-{
+struct nums FnDirKinem(float ang_b, float ang_s, float ang_e) {
     // Se inicializan las variables a utilizar
     float P1[2], P2[2], P3[2], x, y, z, w;
     struct nums TCP;
@@ -57,8 +56,7 @@ struct nums FnDirKinem(float ang_b, float ang_s, float ang_e)
 //
 // dada la posición XYZ en el espacio de la punta de la herramienta y las dimensiones principales del robot en mm calcula
 // la cinemática inversa devolviendo los ángulos del robot correspondientes a dicha posición
-struct nums FnInvKinem(float x, float y, float z)
-{
+struct nums FnInvKinem(float x, float y, float z) {
     // Se inicializan las variables a utilizar
     float P1[2], P2[2], P3[2], t[2], ang_b, ang_s, ang_e, w, a, b, c, d;
     struct nums angulos;
@@ -156,24 +154,23 @@ float** arrayTLineal(float x_inicio, float y_inicio, float z_inicio, float x_fin
     }
 
     // Asignamos los valores del array de salida
-        for (int i = 0; i < num_pasos; ++i) {
-            x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
-            y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
-            z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasos - 1);
+    for (int i = 0; i < num_pasos; ++i) {
+        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
+        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
+        z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasos - 1);
 
-            struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
+        struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
 
-            angulos[i][0] = angles.uno;
-            angulos[i][1] = angles.dos;
-            angulos[i][2] = angles.tres;
-        }
-
+        angulos[i][0] = angles.uno;
+        angulos[i][1] = angles.dos;
+        angulos[i][2] = angles.tres;
+    }
     return angulos;
 }
 
 std::vector<float> Telipse(float x_inicio, float y_inicio, float x_fin, float y_fin) {
     // Se divide la trayectoria elíptica en num_pasos y se calcula la cinemática inversa para cada uno de ellos
-    std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos);
+    std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos), z_pasos(num_pasos);
     std::vector<float> angs_salida(3*num_pasos);
 
     for (int i = 0; i < num_pasos; ++i) {
@@ -181,17 +178,16 @@ std::vector<float> Telipse(float x_inicio, float y_inicio, float x_fin, float y_
         y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
 
         float t = static_cast<float>(i) / (num_pasos - 1) * 2;
-        float z_intermedio;
         if ((0 < t) && (t <= 2)) {
             float angle = (t / 2) * PI;
-            z_intermedio = z_amplitud * sin(angle);
+            z_pasos[i] = z_amplitud * sin(angle);
         } else {
-            z_intermedio = 0;
+            z_pasos[i] = 0;
         }
 
         // Cálculo de los ángulos para las posiciones intermedias
-        struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_intermedio);
-;
+        struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
+
         angs_salida[3*i] = angles.uno;
         angs_salida[3*i+1] = angles.dos;
         angs_salida[3*i+2] = angles.tres;
@@ -199,6 +195,41 @@ std::vector<float> Telipse(float x_inicio, float y_inicio, float x_fin, float y_
     return angs_salida;
 }
 
+float** arrayTelipse(float x_inicio, float y_inicio, float x_fin, float y_fin) {
+    // Conocida la posición incial y final se realiza un bucle para realizar una trayectoria elípitca de num_pasos entre ellas
+    float x_pasos[num_pasos];
+    float y_pasos[num_pasos];
+    float z_pasos[num_pasos];
+
+    // Array de salida
+    float** angulos = new float*[num_pasos];
+    // Inicializamos el array de salida
+    for (int i = 0; i < num_pasos; ++i) {
+        angulos[i] = new float[3];
+    }
+
+    // Asignamos valores al array de salida
+    for (int i = 0; i < num_pasos; i++) {
+        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
+        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
+
+        float t = static_cast<float>(i) / (num_pasos - 1) * 2;
+        if ((0 < t) && (t <= 2)) {
+            float angle = (t / 2) * PI;
+            z_pasos[i] = z_amplitud * sin(angle);
+        } 
+        else {
+            z_pasos[i] = 0;
+        }
+
+        struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
+
+        angulos[i][0] = angles.uno;
+        angulos[i][1] = angles.dos;
+        angulos[i][2] = angles.tres;
+    }
+    return angulos;
+}
 
 // HAY QUE VER CÓMO SE INTEGRAN FINALMENTE ESTAS FUNCIONES, SI SERÍAN PARTE DE LA CINEMÁTICA O HABRÍA QUE INTEGRARLAS DENTRO DEL BUCLE PRINCIPAL
 
