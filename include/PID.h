@@ -18,6 +18,8 @@ class PID
         int setK(float Kp, float Ki, float Kd);
         int setP(float dt, float max, float min);
         int setRange(float maxRange, float minRange);
+        int setWindup(float Windup);
+        int reset();
         float calc(float currentValue, float desiredValue);
         void displayInfo();
 
@@ -32,6 +34,7 @@ class PID
         float _sum_error = 0.0;
         float _maxRange = 180.0;
         float _minRange = 0.0;
+        float _Windup = 0.4;
 };
 
 #endif

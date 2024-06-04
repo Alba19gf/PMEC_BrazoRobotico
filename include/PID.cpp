@@ -77,6 +77,19 @@ int PID::setRange(float maxRange, float minRange)
     return 0;
 }
 
+int PID::setWindup(float Windup)
+{
+    _Windup = Windup;
+    return 0;
+}
+
+int PID::reset()
+{
+    _pre_error = 0.0;
+    _sum_error = 0.0;
+    return 0;
+}
+
 float PID::calc(float currentValue, float desiredValue)
 {
     if(desiredValue > _maxRange)
@@ -88,8 +101,23 @@ float PID::calc(float currentValue, float desiredValue)
 
     float P = _Kp * error;
 
-    _sum_error += error * _dt;
+    // Windup??? TODO: Max Windup and Min Windup
+    // TODO: Check if this is the correct way to implement Windup
+    // Windup para parte integral
+    if((_Ki * _sum_error) < _Windup || (_Ki * _sum_error) > -_Windup)
+    {
+        Serial.printf("[ERROR]: Windup... Ki: %f, sum_error: %f \n", _Ki, _sum_error);
+        _sum_error += error * _dt;
+    }
+
     float I = _Ki * _sum_error;
+
+    // Parte integrativa mismo sentido que el error
+    if(P < 0 && I > 0 || P > 0 && I < 0)
+    {
+        I = -I;
+    }
+    
     
     float D = (_Kd/_dt) * (error - _pre_error);
 
@@ -109,11 +137,11 @@ float PID::calc(float currentValue, float desiredValue)
             /*Serial.printf(">desPos: %f\n", desiredValue);
             Serial.printf(">currPos: %f\n", currentValue);
             Serial.printf(">error: %f\n", error);
-
+            */
             Serial.printf(">PID: %f\n", PID);
             Serial.printf(">P: %f\n", P);
             Serial.printf(">I: %f\n", I);
-            Serial.printf(">D: %f\n", D);*/
+            Serial.printf(">D: %f\n", D);
         }
 
         if(DEBUG & DEBUG_INFO != 0)

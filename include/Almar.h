@@ -33,11 +33,11 @@ const int led_2 = 41;
 // CONFIGURACIÓN MOTORES
 // Pines motores (EN, IN1, IN2, PWM)
 // Constantes control (KP, KI, KD)
-// Rango control (max, min)
-double motor[3][9] = { 
-                      {0, 5, 4, 25000, 0.07, 0.00, 0.001, 270, 90},       // Motor 1
-                      {45, 6, 7, 25000, 0.03, 0.00, 0.001, 270, 90},      // Motor 2
-                      {39, 10, 9, 25000, 0.03, 0.00, 0.001, 270, 90}      // Motor 3
+// Rango control (max, min, windup)
+double motor[3][10] = { 
+                      {0, 5, 4, 25000, 0.04, 0.03, 0.01, 270, 90, 0.6},       // Motor 1
+                      {45, 6, 7, 25000, 0.03, 0.01, 0.001, 270, 90, 0.4},      // Motor 2
+                      {39, 10, 9, 25000, 0.03, 0.01, 0.001, 270, 90, 0.6}      // Motor 3
                     };
 // Cantidad motores
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
@@ -184,6 +184,7 @@ void cmd_set_motor_pos(SerialCommands* sender)
   }
 
   desPos[n] = dPos;
+  _pid[n]->reset();
 
   if(DEBUG & DEBUG_INFO != 0)
   {

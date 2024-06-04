@@ -32,6 +32,7 @@ void setup() {
   cmd.AddCommand(&cmd_set_motor_ki_);
   cmd.AddCommand(&cmd_set_motor_kd_);
   cmd.AddCommand(&cmd_get_encoder_deg_);
+  cmd.AddCommand(&cmd_get_motor_info_);
 
   // Inicializamos el timer
   timer = timerBegin(0, 80, true);                // Timer 0, clock divider 80
@@ -62,6 +63,7 @@ void setup() {
     // Inicializamos el control
     _pid[i] = new PID(motor[i][4], motor[i][5], motor[i][6]);
     _pid[i]->setRange(motor[i][7], motor[i][8]);
+    _pid[i]->setWindup(motor[i][9]);
   }
   // Inicializamos los encoders
   _enc = new AlMar::Esp32::EncoderATM203_Spi2(cs_pins,N_MOTORS,PIN_MOSI,PIN_MISO,PIN_SCLK);
@@ -76,33 +78,41 @@ void loop() {
     pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
     pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
 
-    /*error_global = abs(pos[0] - desPos[0]);
+    error_global = abs(pos[0] - desPos[0]);
 
-    if(error_global > tol)
+    /*if(error_global > tol)
     {
       TCP_d = arrayTLineal(pos[0], 250, -140, desPos[0], 250, -140);
     }*/
     
-    dutyCycle[0] = _pid[0]->calc(pos[0], desPos[0]);
-    _m[0]->SetDuty(dutyCycle[0]);
+    if(error_global > tol)
+    {
+      dutyCycle[0] = _pid[0]->calc(pos[0], desPos[0]);
+      _m[0]->SetDuty(dutyCycle[0]);
+    }
+    else
+    {
+      _m[0]->SetDuty(0);
+      _pid[0]->reset();
+    }
 
-    dutyCycle[1] = _pid[1]->calc(pos[1], desPos[1]);
+    /*dutyCycle[1] = _pid[1]->calc(pos[1], desPos[1]);
     _m[1]->SetDuty(dutyCycle[1]);
 
     dutyCycle[2] = _pid[2]->calc(pos[2], desPos[2]);
-    _m[2]->SetDuty(dutyCycle[2]);
+    _m[2]->SetDuty(dutyCycle[2]);*/
 
     Serial.printf(">pos[0]: %f\n", pos[0]);
-    Serial.printf(">pos[1]: %f\n", pos[1]);
-    Serial.printf(">pos[2]: %f\n", pos[2]);
+    //Serial.printf(">pos[1]: %f\n", pos[1]);
+    //Serial.printf(">pos[2]: %f\n", pos[2]);
 
     Serial.printf(">desPos[0]: %f\n", desPos[0]);
-    Serial.printf(">desPos[1]: %f\n", desPos[1]);
-    Serial.printf(">desPos[2]: %f\n", desPos[2]);
+    //Serial.printf(">desPos[1]: %f\n", desPos[1]);
+    //Serial.printf(">desPos[2]: %f\n", desPos[2]);
 
-    Serial.printf(">dutyCycle[0]: %f\n", dutyCycle[0]);
-    Serial.printf(">dutyCycle[1]: %f\n", dutyCycle[1]);
-    Serial.printf(">dutyCycle[2]: %f\n", dutyCycle[2]);
+    //Serial.printf(">dutyCycle[0]: %f\n", dutyCycle[0]);
+    //Serial.printf(">dutyCycle[1]: %f\n", dutyCycle[1]);
+    //Serial.printf(">dutyCycle[2]: %f\n", dutyCycle[2]);
 
   }
 
