@@ -5,35 +5,17 @@ PID::PID()
 {
     PID::setK(-1.0, -2.0, -3.0);
     PID::setP(1.0, 2.0, 3.0);
-
-    if((DEBUG & DEBUG_INFO != 0) && (DEBUG & DEBUG_PID != 0))
-    {
-        Serial.printf("PID initialized with 1st constructor... \n");
-        PID::displayInfo();
-    }
 }
 
 PID::PID(float Kp, float Ki, float Kd)
 {
     PID::setK(Kp, Ki, Kd);
-
-    if((DEBUG & DEBUG_INFO != 0) && (DEBUG & DEBUG_PID != 0))
-    {
-        Serial.printf("PID initialized with 2nd constructor... \n");
-        PID::displayInfo();
-    }
 }
 
 PID::PID(float Kp, float Ki, float Kd, float dt, float max, float min)
 {
     PID::setK(Kp, Ki, Kd);
     PID::setP(dt, max, min);
-
-    if((DEBUG & DEBUG_INFO != 0) && (DEBUG & DEBUG_PID != 0))
-    {
-        Serial.printf("PID initialized with 3th constructor... \n");
-        PID::displayInfo();
-    }
 }
 
 int PID::setKP(float Kp)
@@ -88,8 +70,20 @@ int PID::setP(float dt, float max, float min)
     return 0;
 }
 
+int PID::setRange(float maxRange, float minRange)
+{
+    _maxRange = maxRange;
+    _minRange = minRange;
+    return 0;
+}
+
 float PID::calc(float currentValue, float desiredValue)
 {
+    if(desiredValue > _maxRange)
+        Serial.printf("[ERROR]: Valor deseado fuera de rango... máx: %f, desVal:%f \n", _maxRange, desiredValue);
+    if(desiredValue < _minRange)
+        Serial.printf("[ERROR]: Valor deseado fuera de rango... mín: %f, desVal:%f \n", _minRange, desiredValue);
+        
     float error = desiredValue - currentValue;
 
     float P = _Kp * error;

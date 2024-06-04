@@ -17,6 +17,7 @@ class PID
         int setMin(float min);
         int setK(float Kp, float Ki, float Kd);
         int setP(float dt, float max, float min);
+        int setRange(float maxRange, float minRange);
         float calc(float currentValue, float desiredValue);
         void displayInfo();
 
@@ -29,8 +30,8 @@ class PID
         float _min = -1.0;
         float _pre_error = 0.0;
         float _sum_error = 0.0;
-        float _maxVal = 180.0;
-        float _minVal = 0.0;
+        float _maxRange = 180.0;
+        float _minRange = 0.0;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include "../include/Almar.h"
-#include "../include/FnKinematics/FnKinematics.cpp"
+//#include "../include/FnKinematics/FnKinematics.cpp"
 
 hw_timer_t *timer = NULL;
 
@@ -11,8 +11,10 @@ void IRAM_ATTR timerCtrl() {
 }
 
 const float dt = 0.1;
-float** angulost;
-float max_error = 1;
+
+float tol = 1;
+float error_global;
+float error_local;
 
 void setup() {
   // Inicializamos el puerto serial
@@ -59,6 +61,7 @@ void setup() {
     _m[i]->begin();
     // Inicializamos el control
     _pid[i] = new PID(motor[i][4], motor[i][5], motor[i][6]);
+    _pid[i]->setRange(motor[i][7], motor[i][8]);
   }
   // Inicializamos los encoders
   _enc = new AlMar::Esp32::EncoderATM203_Spi2(cs_pins,N_MOTORS,PIN_MOSI,PIN_MISO,PIN_SCLK);
@@ -69,34 +72,76 @@ void loop() {
 
   if(ctrl)
   {
+    pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
+    pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
+    pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
+
+    /*error_global = abs(pos[0] - desPos[0]);
+
+    if(error_global > tol)
+    {
+      TCP_d = arrayTLineal(pos[0], 250, -140, desPos[0], 250, -140);
+    }*/
     
-     // Tasks to perform when the Timer interrupt is triggered
-    //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); // Toggle the state of the LED
-    int pos=_enc->Read(0); // lee encoder 0 (M1)
-    int pos2=_enc->Read(1); // lee encoder 1 (M2)
-    int pos3=_enc->Read(2); // lee encoder 2 (M3)
-    posD = (float) (pos*360.0/4096.0);
+    dutyCycle[0] = _pid[0]->calc(pos[0], desPos[0]);
+    _m[0]->SetDuty(dutyCycle[0]);
 
-    angulost = arrayTLineal(0, 250, -140, 80, 250, -140); // TODO: Update x init
+    dutyCycle[1] = _pid[1]->calc(pos[1], desPos[1]);
+    _m[1]->SetDuty(dutyCycle[1]);
 
-    if(pos!=0x80000000 || pos2!=0x80000000 || pos3!=0x80000000) { 
+    dutyCycle[2] = _pid[2]->calc(pos[2], desPos[2]);
+    _m[2]->SetDuty(dutyCycle[2]);
+
+    Serial.printf(">pos[0]: %f\n", pos[0]);
+    Serial.printf(">pos[1]: %f\n", pos[1]);
+    Serial.printf(">pos[2]: %f\n", pos[2]);
+
+    Serial.printf(">desPos[0]: %f\n", desPos[0]);
+    Serial.printf(">desPos[1]: %f\n", desPos[1]);
+    Serial.printf(">desPos[2]: %f\n", desPos[2]);
+
+    Serial.printf(">dutyCycle[0]: %f\n", dutyCycle[0]);
+    Serial.printf(">dutyCycle[1]: %f\n", dutyCycle[1]);
+    Serial.printf(">dutyCycle[2]: %f\n", dutyCycle[2]);
+
+  }
+
+    ctrl = false;
+}
+
+  /*if(ctrl)
+  {
+    pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
+    pos[1] = (float) _enc->Read(0)*(360.0/4096.0);
+    pos[2] = (float) _enc->Read(0)*(360.0/4096.0);
+
+    TCP_d = arrayTLineal(pos[0], 250, -140, desPos[0], 250, -140); // TODO: Update x init
+
+    error_global = abs(pos[0] - TCP_d[num_pasos-1][0]);
+
+    Serial.printf(">pos[0]: %f\n", pos[0]);
+    Serial.printf(">desPos[0]: %f\n", desPos[0]);
+    Serial.printf(">TCP_d[num_pasos-1][0]: %f\n", TCP_d[num_pasos-1][0]);
+    Serial.printf(">error_global: %f\n", error_global);
+    Serial.printf(">dutyCycle: %f\n", dutyCycle);
+
+    if(pos[0]!=0x80000000 || pos[1]!=0x80000000 || pos[2]!=0x80000000) { 
       
-      Serial.printf("Posición inicial: %f \t Posición final: %f \n", posD, angulost[num_pasos-1][0]);
+      //Serial.printf("Posición inicial: %f \t Posición final: %f \n", pos[0], TCP_d[num_pasos-1][0]);
 
-      if(abs(posD - angulost[num_pasos-1][0]) > max_error)
+      if(error_global > tol)
       {
         for(int i = 0; i < num_pasos; i++)
         {
-          desPos = angulost[i][0];
-          Serial.printf("[%i] Posición actual: %f \t Posición deseada: %f \n", i, posD, desPos);
+          desPos[0] = TCP_d[i][0];
+          //Serial.printf("[%i] Posición actual: %f \t Posición deseada: %f \n", i, pos[0], desPos);
 
-          while(abs(desPos - posD) > max_error)
+          error_local = abs(pos[0] - desPos[0]);
+
+          while(error_local > tol)
           {
-            posD = (float) (_enc->Read(0)*360.0/4096.0);
-            Serial.printf(">newPos: %f\n", posD);
-            Serial.printf(">desPos: %f\n", desPos);
-            dutyCycle = _pid[0]->calc(posD, desPos);
-            Serial.printf(">dutyCycle: %f\n", dutyCycle);
+            pos[0] = (float) (_enc->Read(0)*360.0/4096.0);
+            dutyCycle = _pid[0]->calc(pos[0], desPos[0]);
             _m[0]->SetDuty(dutyCycle);
           }
         }
@@ -104,11 +149,9 @@ void loop() {
       else
       {
         _m[0]->SetDuty(0);
-        Serial.printf("Posición final alcanzada\n");
       }
       
     }
 
     ctrl = false;
-  }
-}
+  }*/

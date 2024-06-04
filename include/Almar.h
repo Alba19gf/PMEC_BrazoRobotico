@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "../include/FnKinematics/FnKinematics.cpp"
 
 // Constante para mensajes de debug 
 #define DEBUG_INFO    1
@@ -32,10 +33,11 @@ const int led_2 = 41;
 // CONFIGURACIÓN MOTORES
 // Pines motores (EN, IN1, IN2, PWM)
 // Constantes control (KP, KI, KD)
-double motor[3][7] = { 
-                      {0, 5, 4, 25000, 0.07, 0.00, 0.001},       // Motor 1
-                      {45, 6, 7, 25000, 0.03, 0.002, 0.001},      // Motor 2
-                      {39, 10, 9, 25000, 0.03, 0.002, 0.001}      // Motor 3
+// Rango control (max, min)
+double motor[3][9] = { 
+                      {0, 5, 4, 25000, 0.07, 0.00, 0.001, 270, 90},       // Motor 1
+                      {45, 6, 7, 25000, 0.03, 0.00, 0.001, 270, 90},      // Motor 2
+                      {39, 10, 9, 25000, 0.03, 0.00, 0.001, 270, 90}      // Motor 3
                     };
 // Cantidad motores
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
@@ -46,10 +48,13 @@ int cs_pins[]={PIN_CS_M1, PIN_CS_M2, PIN_CS_M3};
 int pwm_freq = 25000;
 float duty = -1;
 
+// Kinematics
+float** TCP_d;
+
 // PID
-float dutyCycle = 0;
-float desPos = 180.0;
-float posD = 0.0;
+float dutyCycle[N_MOTORS] = {};
+float desPos[N_MOTORS] = {180, 170, 165};
+float pos[N_MOTORS] = {};
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -164,7 +169,7 @@ void cmd_set_motor_pos(SerialCommands* sender)
   }
 
   int n = atoi(n_str);
-  float pos = atof(pos_str);
+  float dPos = atof(pos_str);
 
   if(n < 0 || n >= N_MOTORS)
   {
@@ -172,18 +177,24 @@ void cmd_set_motor_pos(SerialCommands* sender)
     return;
   }
 
-  if(pos < -360 || pos > 360)
+  if(dPos < -360 || dPos > 360)
   {
     Serial.printf("Position value out of range: %f\n", pos);
     return;
   }
 
-  desPos = pos;
+  desPos[n] = dPos;
 
   if(DEBUG & DEBUG_INFO != 0)
   {
     Serial.printf("Motor %i set to %f\n", n, pos);
   }
+
+  /*TCP_d = arrayTLineal(pos[0], 250, -140, desPos[0], 250, -140);
+  for(int i = 0; i < 50; i++)
+  {
+    Serial.printf("TCP_d[%i] >> base:%f, codo:%f, hombro:%f\n", i, i, TCP_d[i][0], TCP_d[i][1], TCP_d[i][2]);
+  }*/
 
 }
 
@@ -309,6 +320,20 @@ void cmd_get_encoder_deg(SerialCommands* sender)
   }
 }
 
+void cmd_get_motor_info(SerialCommands* sender)
+{
+  char* n_str = sender->Next();
+  
+  if(n_str == NULL)
+  {
+    Serial.println("ERROR NO_ARGS");
+    return;
+  }
+
+  int n = atoi(n_str);
+  _pid[n]->displayInfo();
+}
+
 SerialCommand cmd_set_debug_("SET_DEBUG", set_debug);
 
 SerialCommand cmd_set_led1_("SET_LED1", cmd_set_led1);
@@ -323,3 +348,4 @@ SerialCommand cmd_set_motor_kd_("SET_MOTOR_KD", cmd_set_motor_kd);
 
 
 SerialCommand cmd_get_encoder_deg_("GET_ENCODER_DEG", cmd_get_encoder_deg);
+SerialCommand cmd_get_motor_info_("GET_MOTOR_INFO", cmd_get_motor_info);
