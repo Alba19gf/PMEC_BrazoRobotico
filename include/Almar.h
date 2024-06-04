@@ -33,7 +33,7 @@ const int led_2 = 41;
 // Pines motores (EN, IN1, IN2, PWM)
 // Constantes control (KP, KI, KD)
 double motor[3][7] = { 
-                      {0, 5, 4, 25000, 0.03, 0.002, 0.001},       // Motor 1
+                      {0, 5, 4, 25000, 0.07, 0.00, 0.001},       // Motor 1
                       {45, 6, 7, 25000, 0.03, 0.002, 0.001},      // Motor 2
                       {39, 10, 9, 25000, 0.03, 0.002, 0.001}      // Motor 3
                     };
@@ -41,7 +41,7 @@ double motor[3][7] = {
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
 
 // Encoder
-int cs_pins[]={PIN_CS_M1,PIN_CS_M2,PIN_CS_M3};
+int cs_pins[]={PIN_CS_M1, PIN_CS_M2, PIN_CS_M3};
 
 int pwm_freq = 25000;
 float duty = -1;
@@ -50,7 +50,6 @@ float duty = -1;
 float dutyCycle = 0;
 float desPos = 180.0;
 float posD = 0.0;
-float posOld = 0.0;
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -291,6 +290,25 @@ void cmd_set_motor_kd(SerialCommands* sender)
   }
 }
 
+void cmd_get_encoder_deg(SerialCommands* sender)
+{
+  char* n_str = sender->Next();
+  
+  if(n_str == NULL)
+  {
+    Serial.println("ERROR NO_ARGS");
+    return;
+  }
+
+  int n = atoi(n_str);
+  int pos = _enc->Read(n);
+
+  if(DEBUG & DEBUG_INFO != 0)
+  {
+    Serial.printf("Encoder %i position: %i\n", n, pos);
+  }
+}
+
 SerialCommand cmd_set_debug_("SET_DEBUG", set_debug);
 
 SerialCommand cmd_set_led1_("SET_LED1", cmd_set_led1);
@@ -302,3 +320,6 @@ SerialCommand cmd_set_encoder_zero_("SET_ENCODER_ZERO", cmd_set_encoder_zero);
 SerialCommand cmd_set_motor_kp_("SET_MOTOR_KP", cmd_set_motor_kp);
 SerialCommand cmd_set_motor_ki_("SET_MOTOR_KI", cmd_set_motor_ki);
 SerialCommand cmd_set_motor_kd_("SET_MOTOR_KD", cmd_set_motor_kd);
+
+
+SerialCommand cmd_get_encoder_deg_("GET_ENCODER_DEG", cmd_get_encoder_deg);

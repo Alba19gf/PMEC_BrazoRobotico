@@ -112,14 +112,14 @@ float PID::calc(float currentValue, float desiredValue)
     {
         if(DEBUG & DEBUG_PLOT != 0)
         {
-            Serial.printf(">desPos: %f\n", desiredValue);
+            /*Serial.printf(">desPos: %f\n", desiredValue);
             Serial.printf(">currPos: %f\n", currentValue);
             Serial.printf(">error: %f\n", error);
 
             Serial.printf(">PID: %f\n", PID);
             Serial.printf(">P: %f\n", P);
             Serial.printf(">I: %f\n", I);
-            Serial.printf(">D: %f\n", D);
+            Serial.printf(">D: %f\n", D);*/
         }
 
         if(DEBUG & DEBUG_INFO != 0)
