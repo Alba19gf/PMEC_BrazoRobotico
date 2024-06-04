@@ -1,37 +1,32 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// Definimos constantes para representar el estado de cada celda del tablero
 #define EMPTY 0
 #define PLAYER_X 1
 #define PLAYER_O 2
 
-// Función para imprimir el tablero en la consola
 void printBoard(int board[3][3]) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (board[i][j] == PLAYER_X) {
-                printf(" X "); // Representa el jugador X
+                printf(" X ");
             } else if (board[i][j] == PLAYER_O) {
-                printf(" O "); // Representa el jugador O
+                printf(" O ");
             } else {
-                printf(" . "); // Representa una celda vacía
+                printf(" . ");
             }
         }
         printf("\n");
     }
 }
 
-// Función para verificar si hay un ganador en el tablero
 int checkWinner(int board[3][3]) {
-    // Definimos las condiciones de victoria posibles
     int winConditions[8][3][2] = {
-        {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Filas
-        {{0, 0}, {1, 0}, {2, 0}}, {{0, 1}, {1, 1}, {2, 1}}, {{0, 2}, {1, 2}, {2, 2}}, // Columnas
-        {{0, 0}, {1, 1}, {2, 2}}, {{0, 2}, {1, 1}, {2, 0}}  // Diagonales
+        {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, 
+        {{0, 0}, {1, 0}, {2, 0}}, {{0, 1}, {1, 1}, {2, 1}}, {{0, 2}, {1, 2}, {2, 2}}, 
+        {{0, 0}, {1, 1}, {2, 2}}, {{0, 2}, {1, 1}, {2, 0}}
     };
 
-    // Verificamos si alguna condición de victoria se cumple
     for (int i = 0; i < 8; i++) {
         if (board[winConditions[i][0][0]][winConditions[i][0][1]] != EMPTY &&
             board[winConditions[i][0][0]][winConditions[i][0][1]] == board[winConditions[i][1][0]][winConditions[i][1][1]] &&
@@ -40,33 +35,30 @@ int checkWinner(int board[3][3]) {
         }
     }
 
-    // Verificamos si hay celdas vacías para determinar si el juego continúa
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (board[i][j] == EMPTY) {
-                return -1; // El juego continúa
+                return -1;
             }
         }
     }
-    return 0; // Empate
+    return 0;
 }
 
-// Función Minimax para evaluar el mejor movimiento
 int minimax(int board[3][3], int depth, bool isMaximizing) {
-    // Evaluamos si hay un ganador o empate
     int score = checkWinner(board);
-    if (score == PLAYER_X) return -10 + depth; // Jugador X gana
-    if (score == PLAYER_O) return 10 - depth;  // Jugador O gana
-    if (score == 0) return 0; // Empate
+    if (score == PLAYER_X) return -10 + depth;
+    if (score == PLAYER_O) return 10 - depth;
+    if (score == 0) return 0;
 
     if (isMaximizing) {
         int bestScore = -1000;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == EMPTY) {
-                    board[i][j] = PLAYER_O; // Intentamos el movimiento
+                    board[i][j] = PLAYER_O;
                     int value = minimax(board, depth + 1, false);
-                    board[i][j] = EMPTY; // Deshacemos el movimiento
+                    board[i][j] = EMPTY;
                     bestScore = (value > bestScore) ? value : bestScore;
                 }
             }
@@ -77,9 +69,9 @@ int minimax(int board[3][3], int depth, bool isMaximizing) {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 if (board[i][j] == EMPTY) {
-                    board[i][j] = PLAYER_X; // Intentamos el movimiento
+                    board[i][j] = PLAYER_X;
                     int value = minimax(board, depth + 1, true);
-                    board[i][j] = EMPTY; // Deshacemos el movimiento
+                    board[i][j] = EMPTY;
                     bestScore = (value < bestScore) ? value : bestScore;
                 }
             }
@@ -88,7 +80,6 @@ int minimax(int board[3][3], int depth, bool isMaximizing) {
     }
 }
 
-// Función para encontrar el mejor movimiento para la IA
 void findBestMove(int board[3][3], int *bestMoveX, int *bestMoveY) {
     int bestScore = -1000;
     *bestMoveX = -1;
@@ -97,9 +88,9 @@ void findBestMove(int board[3][3], int *bestMoveX, int *bestMoveY) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (board[i][j] == EMPTY) {
-                board[i][j] = PLAYER_O; // Intentamos el movimiento
+                board[i][j] = PLAYER_O;
                 int moveScore = minimax(board, 0, false);
-                board[i][j] = EMPTY; // Deshacemos el movimiento
+                board[i][j] = EMPTY;
                 if (moveScore > bestScore) {
                     bestScore = moveScore;
                     *bestMoveX = i;
@@ -111,18 +102,16 @@ void findBestMove(int board[3][3], int *bestMoveX, int *bestMoveY) {
 }
 
 int main() {
-    // Inicializamos el tablero vacío
     int board[3][3] = {
-        {EMPTY, EMPTY, EMPTY},
-        {EMPTY, EMPTY, EMPTY},
-        {EMPTY, EMPTY, EMPTY}
+        {0, 0, 0}, // Ejemplo de matriz de entrada del código de visión artificial
+        {0, 0, 0}, // Aquí deberías ingresar la matriz real proveniente del código de visión artificial
+        {0, 0, 0}
     };
 
-    int player = PLAYER_X; // Comienza el jugador X
-    int bestMoveX, bestMoveY; // Variables para almacenar el mejor movimiento
+    int player = PLAYER_X;
+    int bestMoveX, bestMoveY;
     int winner;
 
-    // Bucle principal del juego
     while ((winner = checkWinner(board)) == -1) {
         if (player == PLAYER_X) {
             int x, y;
@@ -146,7 +135,6 @@ int main() {
         printf("\n");
     }
 
-    // Anunciamos el resultado del juego
     if (winner == PLAYER_X) {
         printf("¡Has ganado!\n");
     } else if (winner == PLAYER_O) {
