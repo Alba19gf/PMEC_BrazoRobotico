@@ -146,6 +146,7 @@ void loop() {
     Serial.printf(">pos[0]: %f\n", pos[0]);
     Serial.printf(">desPos[0]: %f\n", desPos[0]);
     Serial.printf(">error_global[0]: %f\n", error_global[0]);
+    Serial.printf(">error[0]: %f\n", _pid[0]->_error);
     Serial.printf(">P[0]:%f\n", _pid[0]->__P);
     Serial.printf(">I[0]:%f\n", _pid[0]->_I);
     Serial.printf(">D[0]:%f\n", _pid[0]->_D);
@@ -154,6 +155,7 @@ void loop() {
     Serial.printf(">pos[1]: %f\n", pos[1]);
     Serial.printf(">desPos[1]: %f\n", desPos[1]);
     Serial.printf(">error_global[1]: %f\n", error_global[1]);
+    Serial.printf(">error[1]: %f\n", _pid[1]->_error);
     Serial.printf(">P[1]:%f\n", _pid[1]->__P);
     Serial.printf(">I[1]:%f\n", _pid[1]->_I);
     Serial.printf(">D[1]:%f\n", _pid[1]->_D);
@@ -162,7 +164,7 @@ void loop() {
     Serial.printf(">pos[2]: %f\n", pos[2]);
     Serial.printf(">desPos[2]: %f\n", desPos[2]);
     Serial.printf(">error_global[2]: %f\n", error_global[2]);
-    Serial.printf(">error: %f\n", _pid[2]->_error);
+    Serial.printf(">error[2]: %f\n", _pid[2]->_error);
     Serial.printf(">P[2]:%f\n", _pid[2]->__P);
     Serial.printf(">I[2]:%f\n", _pid[2]->_I);
     Serial.printf(">D[2]:%f\n", _pid[2]->_D);
