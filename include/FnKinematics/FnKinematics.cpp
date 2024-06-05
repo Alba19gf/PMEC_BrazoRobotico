@@ -11,7 +11,7 @@
 #define L3 280
 
 //#define PI 3.141592
-#define num_pasos 50
+#define num_pasos 30
 #define z_amplitud 80
 
 // FUNCIÓN QUE REALIZA LA CINEMÁTICA DIRECTA DEL ROBOT

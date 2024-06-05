@@ -12,8 +12,8 @@ void IRAM_ATTR timerCtrl() {
 
 const float dt = 0.1;
 
-float tol = 1;
-float error_global;
+float tol = 0.5;
+float error_global[N_MOTORS];
 float error_local;
 
 void setup() {
@@ -74,49 +74,106 @@ void loop() {
 
   if(ctrl)
   {
+    // Lectura de los encoders (0, 1, 2
     pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
     pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
     pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
 
-    error_global = abs(pos[0] - desPos[0]);
+    if(pos[0] < 360 && pos[0] > -360)
+    {
+      if((pos[0] - pastPos[0]) < -180)
+        pos[0] += 360;
+      else if((pos[0] - pastPos[0]) > 180)
+        pos[0] -= 360;
 
-    /*if(error_global > tol)
-    {
-      TCP_d = arrayTLineal(pos[0], 250, -140, desPos[0], 250, -140);
-    }*/
-    
-    if(error_global > tol)
-    {
-      dutyCycle[0] = _pid[0]->calc(pos[0], desPos[0]);
-      _m[0]->SetDuty(dutyCycle[0]);
+      error_global[0] = abs(pos[0] - desPos[0]);
+      
+      if(error_global[0] > tol)
+      {
+        dutyCycle[0] = _pid[0]->calc(pos[0], desPos[0]);
+        _m[0]->SetDuty(dutyCycle[0]);
+      }
+      else
+      {
+        _m[0]->SetDuty(0.05);
+        _pid[0]->reset();
+      }
     }
-    else
+
+    if(pos[1] < 360 && pos[1] > -360)
     {
-      _m[0]->SetDuty(0);
-      _pid[0]->reset();
+      if((pos[1] - pastPos[1]) < -180)
+        pos[1] += 360;
+      else if((pos[1] - pastPos[1]) > 180)
+        pos[1] -= 360;
+
+      error_global[1] = abs(pos[1] - desPos[1]);
+      
+      if(error_global[1] > tol)
+      {
+
+        dutyCycle[1] = _pid[1]->calc(pos[1], desPos[1]);
+        _m[1]->SetDuty(dutyCycle[1]);
+      }
+      else
+      {
+        _m[1]->SetDuty(0.05);
+        _pid[1]->reset();
+      }
     }
 
-    /*dutyCycle[1] = _pid[1]->calc(pos[1], desPos[1]);
-    _m[1]->SetDuty(dutyCycle[1]);
+    if(pos[2] < 360 && pos[2] > -360)
+    {
+      if((pos[2] - pastPos[2]) < -180)
+        pos[2] += 360;
+      else if((pos[2] - pastPos[2]) > 180)
+        pos[2] -= 360;
 
-    dutyCycle[2] = _pid[2]->calc(pos[2], desPos[2]);
-    _m[2]->SetDuty(dutyCycle[2]);*/
+      error_global[2] = abs(pos[2] - desPos[2]);
+      
+      if(error_global[2] > tol)
+      {
+        dutyCycle[2] = _pid[2]->calc(pos[2], desPos[2]);
+        _m[2]->SetDuty(dutyCycle[2]);
+      }
+      else
+      {
+        _m[2]->SetDuty(0.05);
+        _pid[2]->reset();
+      }
+    }
 
     Serial.printf(">pos[0]: %f\n", pos[0]);
-    //Serial.printf(">pos[1]: %f\n", pos[1]);
-    //Serial.printf(">pos[2]: %f\n", pos[2]);
-
     Serial.printf(">desPos[0]: %f\n", desPos[0]);
-    //Serial.printf(">desPos[1]: %f\n", desPos[1]);
-    //Serial.printf(">desPos[2]: %f\n", desPos[2]);
+    Serial.printf(">error_global[0]: %f\n", error_global[0]);
+    Serial.printf(">P[0]:%f\n", _pid[0]->__P);
+    Serial.printf(">I[0]:%f\n", _pid[0]->_I);
+    Serial.printf(">D[0]:%f\n", _pid[0]->_D);
+    Serial.printf(">PID[0]:%f\n", _pid[0]->_PID);
 
-    //Serial.printf(">dutyCycle[0]: %f\n", dutyCycle[0]);
-    //Serial.printf(">dutyCycle[1]: %f\n", dutyCycle[1]);
-    //Serial.printf(">dutyCycle[2]: %f\n", dutyCycle[2]);
+    Serial.printf(">pos[1]: %f\n", pos[1]);
+    Serial.printf(">desPos[1]: %f\n", desPos[1]);
+    Serial.printf(">error_global[1]: %f\n", error_global[1]);
+    Serial.printf(">P[1]:%f\n", _pid[1]->__P);
+    Serial.printf(">I[1]:%f\n", _pid[1]->_I);
+    Serial.printf(">D[1]:%f\n", _pid[1]->_D);
+    Serial.printf(">PID[1]:%f\n", _pid[1]->_PID);
 
-  }
+    Serial.printf(">pos[2]: %f\n", pos[2]);
+    Serial.printf(">desPos[2]: %f\n", desPos[2]);
+    Serial.printf(">error_global[2]: %f\n", error_global[2]);
+    Serial.printf(">error: %f\n", _pid[2]->_error);
+    Serial.printf(">P[2]:%f\n", _pid[2]->__P);
+    Serial.printf(">I[2]:%f\n", _pid[2]->_I);
+    Serial.printf(">D[2]:%f\n", _pid[2]->_D);
+    Serial.printf(">PID: %f\n", _pid[2]->_PID);
+
+    pastPos[0] = pos[0];
+    pastPos[1] = pos[1];
+    pastPos[2] = pos[2];
 
     ctrl = false;
+  }
 }
 
   /*if(ctrl)

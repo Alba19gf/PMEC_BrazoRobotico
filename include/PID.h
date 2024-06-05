@@ -23,7 +23,7 @@ class PID
         float calc(float currentValue, float desiredValue);
         void displayInfo();
 
-    private:
+    public:
         float _Kp;
         float _Ki;
         float _Kd;
@@ -35,6 +35,13 @@ class PID
         float _maxRange = 180.0;
         float _minRange = 0.0;
         float _Windup = 0.4;
+
+        float _error = 0.0;
+        float __P = 0.0;
+        float _I = 0.0;
+        float _D = 0.0;
+        float _PID = 0.0;
+
 };
 
 #endif

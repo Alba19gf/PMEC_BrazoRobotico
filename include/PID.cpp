@@ -93,42 +93,47 @@ int PID::reset()
 float PID::calc(float currentValue, float desiredValue)
 {
     if(desiredValue > _maxRange)
+    {
         Serial.printf("[ERROR]: Valor deseado fuera de rango... máx: %f, desVal:%f \n", _maxRange, desiredValue);
-    if(desiredValue < _minRange)
-        Serial.printf("[ERROR]: Valor deseado fuera de rango... mín: %f, desVal:%f \n", _minRange, desiredValue);
-        
-    float error = desiredValue - currentValue;
+        return 0;
+    }
 
-    float P = _Kp * error;
+    if(desiredValue < _minRange)
+    {
+        Serial.printf("[ERROR]: Valor deseado fuera de rango... mín: %f, desVal:%f \n", _minRange, desiredValue);
+        return 0;
+    }
+        
+    _error = desiredValue - currentValue;
+
+    __P = _Kp * _error;
 
     // Windup??? TODO: Max Windup and Min Windup
     // TODO: Check if this is the correct way to implement Windup
     // Windup para parte integral
-    if((_Ki * _sum_error) < _Windup || (_Ki * _sum_error) > -_Windup)
+    if(abs((_Ki * _sum_error)) < _Windup && _Ki > 0)
     {
-        Serial.printf("[ERROR]: Windup... Ki: %f, sum_error: %f \n", _Ki, _sum_error);
-        _sum_error += error * _dt;
-    }
+        _sum_error += _error * _dt;
+    }    
 
-    float I = _Ki * _sum_error;
-
+    _I = _Ki * _sum_error;
     // Parte integrativa mismo sentido que el error
-    if(P < 0 && I > 0 || P > 0 && I < 0)
+    if(_P < 0 && _I > 0 || __P > 0 && _I < 0)
     {
-        I = -I;
+        _I = -_I;
     }
     
+    _D = (_Kd/_dt) * (_error - _pre_error);
     
-    float D = (_Kd/_dt) * (error - _pre_error);
+    _PID = __P + _I + _D;
 
-    float PID = P + I + D;
+    // Windup para PID (de -1 a 1 según el dutycycle)
+    if (_PID <= _min)
+        _PID = _min;
+    if (_PID >= _max)
+        _PID = _max;
 
-    if (PID <= _min)
-        PID = _min;
-    if (PID >= _max)
-        PID = _max;
-
-    _pre_error = error;
+    _pre_error = _error;
 
     if(DEBUG & DEBUG_PID != 0)
     {
@@ -137,11 +142,14 @@ float PID::calc(float currentValue, float desiredValue)
             /*Serial.printf(">desPos: %f\n", desiredValue);
             Serial.printf(">currPos: %f\n", currentValue);
             Serial.printf(">error: %f\n", error);
-            */
+            
+            Serial.printf(">Error: %f\n", error);
+            Serial.printf(">_pre_error: %f\n", _pre_error);
+            Serial.printf(">sum_error: %f\n", _sum_error);
             Serial.printf(">PID: %f\n", PID);
             Serial.printf(">P: %f\n", P);
             Serial.printf(">I: %f\n", I);
-            Serial.printf(">D: %f\n", D);
+            Serial.printf(">D: %f\n", D);*/
         }
 
         if(DEBUG & DEBUG_INFO != 0)
@@ -151,10 +159,12 @@ float PID::calc(float currentValue, float desiredValue)
         }
     }
 
-    return PID;
+    return _PID;
 }
 
 void PID::displayInfo()
 {
-    Serial.printf("Kp: %f, Ki: %f, Kd: %f, dt: %f, max: %f, min: %f\n", _Kp, _Ki, _Kd, _dt, _max, _min);
+    //Serial.printf("Kp: %f, Ki: %f, Kd: %f, dt: %f, max: %f, min: %f\n", _Kp, _Ki, _Kd, _dt, _max, _min);
+    Serial.printf("Kp: %f, Ki: %f, Kd: %f\n", _Kp, _Ki, _Kd);
+    Serial.printf("_Windup: %f \n", _Windup); 
 }

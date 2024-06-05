@@ -35,26 +35,27 @@ const int led_2 = 41;
 // Constantes control (KP, KI, KD)
 // Rango control (max, min, windup)
 double motor[3][10] = { 
-                      {0, 5, 4, 25000, 0.04, 0.03, 0.01, 270, 90, 0.6},       // Motor 1
-                      {45, 6, 7, 25000, 0.03, 0.01, 0.001, 270, 90, 0.4},      // Motor 2
-                      {39, 10, 9, 25000, 0.03, 0.01, 0.001, 270, 90, 0.6}      // Motor 3
+                      //{0, 5, 4, 25000, 0.04, 0.03, 0.01, 270, 90, 0.6},       // Motor 1 en vacío
+                      //{0, 5, 4, 25000, 0.18, 0.03, 0.09, 270, 90, 0.6},         // Motor 1 con 500g
+                      {0, 5, 4, 25000, 0.3, 0.01, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
+                      {45, 6, 7, 25000, 0.29, 0.06, 0.00, 360, -360, 0.4},      // Motor 2
+                      {39, 9, 10, 25000, 0.03, 0.01, 0.001, 360, -360, 0.6}      // Motor 3
                     };
 // Cantidad motores
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
 
 // Encoder
 int cs_pins[]={PIN_CS_M1, PIN_CS_M2, PIN_CS_M3};
-
 int pwm_freq = 25000;
-float duty = -1;
 
 // Kinematics
 float** TCP_d;
 
-// PID
+// CONTROL
 float dutyCycle[N_MOTORS] = {};
-float desPos[N_MOTORS] = {180, 170, 165};
+float desPos[N_MOTORS] = {0, -360, -0};
 float pos[N_MOTORS] = {};
+float pastPos[N_MOTORS] = {};
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -179,7 +180,7 @@ void cmd_set_motor_pos(SerialCommands* sender)
 
   if(dPos < -360 || dPos > 360)
   {
-    Serial.printf("Position value out of range: %f\n", pos);
+    Serial.printf("Position value out of range: %f\n", dPos);
     return;
   }
 
@@ -188,7 +189,7 @@ void cmd_set_motor_pos(SerialCommands* sender)
 
   if(DEBUG & DEBUG_INFO != 0)
   {
-    Serial.printf("Motor %i set to %f\n", n, pos);
+    Serial.printf("Motor %i set to %f\n", n, dPos);
   }
 
   /*TCP_d = arrayTLineal(pos[0], 250, -140, desPos[0], 250, -140);
