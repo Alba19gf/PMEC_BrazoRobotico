@@ -8,8 +8,8 @@
 #define SDA_PIN 21
 #define SCL_PIN 22
 
-byte dataToSend = 0x42;   // Datos a enviar
-byte slaveAddress = 0x50; // Dirección del dispositivo esclavo
+byte dataToSend = 0x42;   // Datos a enviar // 
+byte slaveAddress = 0x50; // Dirección del dispositivo esclavo HAY QUE COMPROBAR CUAL ES
 
 // //* Funciones CÓDIGO EXCLAVO
 // void receiveEvent(int howMany)
