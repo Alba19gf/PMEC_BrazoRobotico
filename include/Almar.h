@@ -37,7 +37,8 @@ const int led_2 = 41;
 double motor[3][10] = { 
                       //{0, 5, 4, 25000, 0.04, 0.03, 0.01, 270, 90, 0.6},       // Motor 1 en vacío
                       //{0, 5, 4, 25000, 0.18, 0.03, 0.09, 270, 90, 0.6},         // Motor 1 con 500g
-                      {0, 5, 4, 25000, 0.3, 0.01, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
+                      //{0, 4, 5, 25000, 0.3, 0.01, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
+                      {0, 4, 5, 25000, 0.4, 0.04, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
                       {45, 7, 6, 25000, 0.29, 0.06, 0.00, 360, -360, 0.4},      // Motor 2
                       {39, 9, 10, 25000, 0.30, 0.03, 0.00, 360, -360, 0.6}      // Motor 3
                     };
@@ -53,7 +54,7 @@ float** TCP_d;
 
 // CONTROL
 float dutyCycle[N_MOTORS] = {};
-float desPos[N_MOTORS] = {0, 0, -0};
+float desPos[N_MOTORS] = {0, 0, 0};
 float pos[N_MOTORS] = {};
 float pastPos[N_MOTORS] = {};
 
@@ -322,6 +323,15 @@ void cmd_get_encoder_deg(SerialCommands* sender)
   }
 }
 
+void cmd_get_encoders_deg(SerialCommands* sender)
+{
+  for(int n = 0; n < N_MOTORS; n++)
+  {
+    int pos = _enc->Read(n)*(360.0/4096.0);
+    Serial.printf("Encoder %i position: %f\n", n, pos);
+  }
+}
+
 void cmd_get_motor_info(SerialCommands* sender)
 {
   char* n_str = sender->Next();
@@ -336,12 +346,39 @@ void cmd_get_motor_info(SerialCommands* sender)
   _pid[n]->displayInfo();
 }
 
+void cmd_set_pos(SerialCommands* sender)
+{
+  char* x_str = sender->Next();
+  char* y_str = sender->Next();
+  char* z_str = sender->Next();
+  
+  if(x_str == NULL || y_str == NULL || z_str == NULL)
+  {
+    Serial.println("ERROR NO_ARGS");
+    return;
+  }
+
+  float x = atof(x_str);
+  float y = atof(y_str);
+  float z = atof(z_str);
+
+  if(DEBUG & DEBUG_INFO != 0)
+  {
+    Serial.printf("Setting position to x:%f, y:%f, z:%f\n", x, y, z);
+  }
+
+  desPos[0] = x;
+  desPos[1] = y;
+  desPos[2] = z;
+}
+
 SerialCommand cmd_set_debug_("SET_DEBUG", set_debug);
 
 SerialCommand cmd_set_led1_("SET_LED1", cmd_set_led1);
 SerialCommand cmd_set_led2_("SET_LED2", cmd_set_led2);
 
 SerialCommand cmd_set_motor_pos_("SET_MOTOR_POS", cmd_set_motor_pos);
+SerialCommand cmd_set_pos_("SET_POS", cmd_set_pos);
 SerialCommand cmd_set_encoder_zero_("SET_ENCODER_ZERO", cmd_set_encoder_zero);
 
 SerialCommand cmd_set_motor_kp_("SET_MOTOR_KP", cmd_set_motor_kp);
@@ -350,4 +387,5 @@ SerialCommand cmd_set_motor_kd_("SET_MOTOR_KD", cmd_set_motor_kd);
 
 
 SerialCommand cmd_get_encoder_deg_("GET_ENCODER_DEG", cmd_get_encoder_deg);
+SerialCommand cmd_get_encoders_deg_("GET_ENCODERs_DEG", cmd_get_encoders_deg);
 SerialCommand cmd_get_motor_info_("GET_MOTOR_INFO", cmd_get_motor_info);
