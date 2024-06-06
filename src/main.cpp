@@ -1,67 +1,63 @@
-//* COMUNICACION I2C ENTRE ESP
-
-// DECLARACIÓN DE LIBRERÍAS
 #include <Arduino.h>
 #include <Wire.h>
 
-// Definir pines SDA y SCL
-#define SDA_PIN 21
-#define SCL_PIN 22
-
-byte dataToSend = 0x42;   // Datos a enviar // 
-byte slaveAddress = 0x50; // Dirección del dispositivo esclavo HAY QUE COMPROBAR CUAL ES
-
-// //* Funciones CÓDIGO EXCLAVO
-// void receiveEvent(int howMany)
-// {
-//     while (Wire.available())
-//     {
-//         char c = Wire.read(); // Lee un byte recibido del maestro
-//         Serial.print(c);      // Imprime el byte en el monitor serial
-//     }
-//     Serial.println(); // Nueva línea para el siguiente mensaje
-// }
-
-// void requestEvent()
-// {
-//     Wire.write("Hola maestro!"); // Envía un mensaje de vuelta al maestro
-// }
-
 void setup()
 {
-    //*CODIGO MAESTRO (ESP32-EYE)
-    // Iniciar comunicación I2C
-    Wire.begin(SDA_PIN, SCL_PIN);
-    Serial.begin(115200); // Inicializa comunicación serial
-    // delay(1000); //Esperar un poco
+  Serial.begin(115200);
+  Wire.begin();
+  
+  byte error, address;
+  int deviceCount = 0;
 
-    // //* CODIGO ESCLAVO (ESP32)
-    // Wire.begin(slaveAddress, SDA_PIN, SCL_PIN); // Inicializa I2C como esclavo con pines específicos
-    // Wire.onReceive(receiveEvent);               // Registra la función de callback para recepción de datos
-    // Wire.onRequest(requestEvent);               // Registra la función de callback para solicitud de datos
-    // Serial.begin(115200);                       // Inicializa la comunicación serial 
+  Serial.println("Escaneando direcciones I2C...");
+
+  for (address = 1; address < 127; address++)
+  {
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (error == 0)
+    {
+      Serial.print("Dispositivo encontrado en la dirección 0x");
+      if (address < 16)
+      {
+        Serial.print("0");
+      }
+      Serial.println(address, HEX);
+      deviceCount++;
+    }
+  }
+
+  if (deviceCount == 0)
+  {
+    Serial.println("No se encontraron dispositivos I2C.");
+  }
+
+//   // Configurar la dirección del MPU6050 si es necesario
+//   byte newAddress = 0x68;     // Nueva dirección deseada
+//   byte currentAddress = 0x68; // Dirección actual del MPU6050
+
+//   if (currentAddress != newAddress)
+//   {
+//     Wire.beginTransmission(currentAddress);
+//     Wire.write(0x6B); // Registro de configuración del MPU6050
+//     Wire.write(0x00); // Valor para desactivar el modo de suspensión
+//     Wire.endTransmission();
+
+//     Wire.beginTransmission(currentAddress);
+//     Wire.write(0x68);       // Registro de dirección I2C del MPU6050
+//     Wire.write(newAddress); // Nueva dirección deseada
+//     Wire.endTransmission();
+//     Serial.print("Dirección del MPU6050 cambiada a 0x");
+//     if (newAddress < 16)
+//     {
+//       Serial.print("0");
+//     }
+//     Serial.println(newAddress, HEX);
+//   }
 }
 
 void loop()
 {
-    //*CODIGO MAESTRO
-    Wire.beginTransmission(slaveAddress); // Iniciar transmisión al dispositivo
-    Wire.write(dataToSend);               // Enviar datos
-    Wire.endTransmission();               // Finalizar transmisión
-    //
-
-
-    //* Prueba del codigo maestro
-    //   Wire.beginTransmission(slaveAddress); // Inicia la transmisión a la dirección del esclavo
-    //   Wire.write("Hola esclavo!"); // Envía un mensaje al esclavo
-    //   Wire.endTransmission(); // Termina la transmisión
-
-    //   delay(1000); // Espera un segundo antes de enviar otro mensaje
-
-    //   Wire.requestFrom(slaveAddress, 13); // Solicita 13 bytes del esclavo
-    //   while(Wire.available()) {
-    //     char c = Wire.read(); // Lee un byte recibido del esclavo
-    //     Serial.print(c); // Imprime el byte en el monitor serial
-    //   }
-    //   Serial.println(); // Nueva línea para el siguiente mensaje
+ 
 }
