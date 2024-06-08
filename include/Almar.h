@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include "../include/FnKinematics/FnKinematics.cpp"
 
 // Constante para mensajes de debug 
 #define DEBUG_INFO    1
@@ -13,10 +12,10 @@ int DEBUG = DEBUG_ALL;
 
 #include "../lib/Almar/ALMar_ESP32_Driver_L298n.cpp"
 #include "../lib/Almar/ALMar_ESP32_EncoderATM203_Spi2.cpp"
-
 #include "../include/PID.cpp"
-
 #include "../lib/Serial/SerialCommands.h"
+#include "../include/FnKinematics/FnKinematics.cpp"
+#include "../include/FnKinematics/FnKinematicsv2.cpp"
 
 #define PIN_CS_M1  1 //(chip select para encoder de motor 1) 10 for SPI3
 #define PIN_CS_M2  2 //(chip select para encoder de motor 2) 
@@ -35,9 +34,6 @@ const int led_2 = 41;
 // Constantes control (KP, KI, KD)
 // Rango control (max, min, windup)
 double motor[3][10] = { 
-                      //{0, 5, 4, 25000, 0.04, 0.03, 0.01, 270, 90, 0.6},       // Motor 1 en vacío
-                      //{0, 5, 4, 25000, 0.18, 0.03, 0.09, 270, 90, 0.6},         // Motor 1 con 500g
-                      //{0, 4, 5, 25000, 0.3, 0.01, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
                       {0, 4, 5, 25000, 0.4, 0.04, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
                       {45, 7, 6, 25000, 0.29, 0.06, 0.00, 360, -360, 0.4},      // Motor 2
                       {39, 9, 10, 25000, 0.30, 0.03, 0.00, 360, -360, 0.6}      // Motor 3
@@ -54,9 +50,15 @@ float** TCP_d;
 
 // CONTROL
 float dutyCycle[N_MOTORS] = {};
+
+// Control motores
 float desPos[N_MOTORS] = {0, 0, 0};
 float pos[N_MOTORS] = {};
 float pastPos[N_MOTORS] = {};
+
+// Control TCP
+float tcp[N_MOTORS];
+float des_tcp[N_MOTORS];
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -346,7 +348,7 @@ void cmd_get_motor_info(SerialCommands* sender)
   _pid[n]->displayInfo();
 }
 
-void cmd_set_pos(SerialCommands* sender)
+void cmd_set_tcp(SerialCommands* sender)
 {
   char* x_str = sender->Next();
   char* y_str = sender->Next();
@@ -367,9 +369,14 @@ void cmd_set_pos(SerialCommands* sender)
     Serial.printf("Setting position to x:%f, y:%f, z:%f\n", x, y, z);
   }
 
-  desPos[0] = x;
-  desPos[1] = y;
-  desPos[2] = z;
+  des_tcp[0] = x;
+  des_tcp[1] = y;
+  des_tcp[2] = z;
+}
+
+void cmd_get_tcp(SerialCommands* sender)
+{
+  Serial.printf("TCP position: x:%f, y:%f, z:%f\n", tcp[0], tcp[1], tcp[2]);
 }
 
 SerialCommand cmd_set_debug_("SET_DEBUG", set_debug);
@@ -378,14 +385,15 @@ SerialCommand cmd_set_led1_("SET_LED1", cmd_set_led1);
 SerialCommand cmd_set_led2_("SET_LED2", cmd_set_led2);
 
 SerialCommand cmd_set_motor_pos_("SET_MOTOR_POS", cmd_set_motor_pos);
-SerialCommand cmd_set_pos_("SET_POS", cmd_set_pos);
 SerialCommand cmd_set_encoder_zero_("SET_ENCODER_ZERO", cmd_set_encoder_zero);
 
 SerialCommand cmd_set_motor_kp_("SET_MOTOR_KP", cmd_set_motor_kp);
 SerialCommand cmd_set_motor_ki_("SET_MOTOR_KI", cmd_set_motor_ki);
 SerialCommand cmd_set_motor_kd_("SET_MOTOR_KD", cmd_set_motor_kd);
 
-
 SerialCommand cmd_get_encoder_deg_("GET_ENCODER_DEG", cmd_get_encoder_deg);
-SerialCommand cmd_get_encoders_deg_("GET_ENCODERs_DEG", cmd_get_encoders_deg);
+SerialCommand cmd_get_encoders_deg_("GET_ENCODERS_DEG", cmd_get_encoders_deg);
 SerialCommand cmd_get_motor_info_("GET_MOTOR_INFO", cmd_get_motor_info);
+
+SerialCommand cmd_set_tcp_("SET_TCP", cmd_set_tcp);
+SerialCommand cmd_get_tcp_("GET_TCP", cmd_get_tcp);
