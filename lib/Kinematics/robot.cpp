@@ -1,115 +1,84 @@
 #include "Robot.h"
+#include "Kinematics.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include <iostream>
 #include <vector>
-#include "Kinematics.h"
+#include <cmath>
 
-#define num_pasos 50
+#define PI 3.141592
+#define paso 10
 #define z_amplitud 80
+#define MAX(a,b) (((a)>=(b)) ? (a) : (b))
 
-void Robot::Tlineal(float x_inicio, float y_inicio, float z_inicio, float x_fin, float y_fin, float z_fin, float L1, float L2, float L3) {
-    std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos), z_pasos(num_pasos);
-    std::vector<float> angs_salida(3 * num_pasos);
+float** Robot::arrayTlineal(float x_inicio, float y_inicio, float z_inicio, float x_fin, float y_fin, float z_fin) {
+    float num_pasos_x = round(abs(x_fin-x_inicio)/paso);
+    float num_pasos_y = round(abs(y_fin-y_inicio)/paso);
+    float num_pasos_z = round(abs(z_fin-z_inicio)/paso);
+    
+    float num_pasos = MAX(num_pasos_x, num_pasos_y);
+    num_pasos = MAX(num_pasos, num_pasos_z);
+    
+    std::vector<float> x_pasos((int)num_pasos);
+    std::vector<float> y_pasos((int)num_pasos);
+    std::vector<float> z_pasos((int)num_pasos);
 
-    for (int i = 0; i < num_pasos; ++i) {
-        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
-        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
-        z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasos - 1);
-
-        Nums angles = Kinematics::FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i], L1, L2, L3);
-
-        angs_salida[3 * i] = angles.uno;
-        angs_salida[3 * i + 1] = angles.dos;
-        angs_salida[3 * i + 2] = angles.tres;
-    }
-
-    // Aquí puedes agregar código para usar angs_salida según sea necesario
-}
-
-void Robot::Telipse(float x_inicio, float y_inicio, float x_fin, float y_fin, float L1, float L2, float L3) {
-    std::vector<float> x_pasos(num_pasos), y_pasos(num_pasos), z_pasos(num_pasos);
-    std::vector<float> angs_salida(3 * num_pasos);
-
-    for (int i = 0; i < num_pasos; ++i) {
-        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
-        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
-
-        float t = static_cast<float>(i) / (num_pasos - 1) * 2;
-        if ((0 < t) && (t <= 2)) {
-            float angle = (t / 2) * PI;
-            z_pasos[i] = z_amplitud * sin(angle);
-        } else {
-            z_pasos[i] = 0;
-        }
-
-        Nums angles = Kinematics::FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i], L1, L2, L3);
-
-        angs_salida[3 * i] = angles.uno;
-        angs_salida[3 * i + 1] = angles.dos;
-        angs_salida[3 * i + 2] = angles.tres;
-    }
-
-    // Aquí puedes agregar código para usar angs_salida según sea necesario
-}
-
-float** Robot::arrayTlineal(float x_inicio, float y_inicio, float z_inicio, float x_fin, float y_fin, float z_fin, float L1, float L2, float L3) {
-    float x_pasos[num_pasos];
-    float y_pasos[num_pasos];
-    float z_pasos[num_pasos];
-
-    float** angulos = new float*[num_pasos];
+    float** angulos = new float*[(int)num_pasos];
     for (int i = 0; i < num_pasos; ++i) {
         angulos[i] = new float[3];
     }
 
     for (int i = 0; i < num_pasos; ++i) {
-        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
+        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos- 1);
         y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
         z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasos - 1);
 
-        Nums angles = Kinematics::FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i], L1, L2, L3);
+        Nums angles = Kinematics::FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
 
         angulos[i][0] = angles.uno;
         angulos[i][1] = angles.dos;
         angulos[i][2] = angles.tres;
+
+        printf("TLINEAL %d: %2.3f \t %2.3f \t %2.3f \n", i, angulos[i][0], angulos[i][1], angulos[i][2]);
     }
     return angulos;
 }
 
-float** Robot::arrayTelipse(float x_inicio, float y_inicio, float x_fin, float y_fin, float L1, float L2, float L3) {
-       // Conocida la posición incial y final se realiza un bucle para realizar una trayectoria elípitca de num_pasos entre ellas
-    float x_pasos[num_pasos];
-    float y_pasos[num_pasos];
-    float z_pasos[num_pasos];
+float** Robot::arrayTelipse(float x_inicio, float y_inicio, float x_fin, float y_fin) {
+    float num_pasos_x = round(abs(x_fin-x_inicio)/paso);
+    float num_pasos_y = round(abs(y_fin-y_inicio)/paso);
+    
+    float num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
+    
+    std::vector<float> x_pasos((int)num_pasosv2);
+    std::vector<float> y_pasos((int)num_pasosv2);
+    std::vector<float> z_pasos((int)num_pasosv2);
 
-    // Array de salida
-    float** angulos = new float*[num_pasos];
-    // Inicializamos el array de salida
-    for (int i = 0; i < num_pasos; ++i) {
+    float** angulos = new float*[(int)num_pasosv2];
+    for (int i = 0; i < num_pasosv2; ++i) {
         angulos[i] = new float[3];
     }
-    
-    // Asignamos valores al array de salida
-    for (int i = 0; i < num_pasos; ++i) {
-        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasos - 1);
-        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasos - 1);
 
-        float t = static_cast<float>(i) / (num_pasos - 1) * 2;
+    for (int i = 0; i < num_pasosv2; i++) {
+        x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasosv2 - 1);
+        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasosv2 - 1);
+
+        float t = static_cast<float>(i) / (num_pasosv2 - 1) * 2;
         if ((0 < t) && (t <= 2)) {
             float angle = (t / 2) * PI;
             z_pasos[i] = z_amplitud * sin(angle);
-        } else {
+        } 
+        else {
             z_pasos[i] = 0;
         }
 
-        Nums angles = Kinematics::FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i], L1, L2, L3);
+        Nums angles = Kinematics::FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
 
         angulos[i][0] = angles.uno;
         angulos[i][1] = angles.dos;
         angulos[i][2] = angles.tres;
+
+        printf("TELIPSE %d: %2.3f \t %2.3f \t %2.3f \n", i, angulos[i][0], angulos[i][1], angulos[i][2]);
     }
     return angulos;
 }

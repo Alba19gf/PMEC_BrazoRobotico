@@ -1,16 +1,12 @@
 #include "Kinematics.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include <iostream>
-#include <vector>
-#include "nums.h"
 
 #define L1 275
 #define L2 255
 #define L3 280
 #define PI 3.141592
+
 
 Nums FnDirKinem(float ang_b, float ang_s, float ang_e) {
     // Se inicializan las variables a utilizar
