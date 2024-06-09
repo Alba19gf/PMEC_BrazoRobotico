@@ -19,19 +19,23 @@
 
 float** arrayTLinealv2(float x_inicio, float y_inicio, float z_inicio, float x_fin, float y_fin, float z_fin) {
     // Conocida la posición incial y final se realiza un bucle para dividir la recta que las une en num_pasos
-    float num_pasos_x = round(abs(x_fin-x_inicio)/paso);
-    float num_pasos_y = round(abs(y_fin-y_inicio)/paso);
-    float num_pasos_z = round(abs(z_fin-z_inicio)/paso);
+    int num_pasos_x = ceil(abs(x_fin-x_inicio)/paso);
+    int num_pasos_y = ceil(abs(y_fin-y_inicio)/paso);
+    int num_pasos_z = ceil(abs(z_fin-z_inicio)/paso);
     
-    float num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
+    int num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
     num_pasosv2 = MAX(num_pasosv2, num_pasos_z);
+
+    if (num_pasosv2 == 0) {
+        num_pasosv2 = 1;
+    }
     
     float x_pasos[(int)num_pasosv2];
     float y_pasos[(int)num_pasosv2];
     float z_pasos[(int)num_pasosv2];
 
     // Array de salida
-    float** angulos = new float*[(int)num_pasosv2];
+    /*float** angulos = new float*[(int)num_pasosv2];
     // Inicializamos el array de salida
     for (int i = 0; i < num_pasosv2; ++i) {
         angulos[i] = new float[3];
@@ -50,7 +54,30 @@ float** arrayTLinealv2(float x_inicio, float y_inicio, float z_inicio, float x_f
         angulos[i][2] = angles.tres;
 
         //printf("TLINEAL %d: %2.3f \t %2.3f \t %2.3f \n", i, angulos[i][0], angulos[i][1], angulos[i][2]);
+    }*/
+
+    float** angulos = new float*[3];
+    for (int i = 0; i < 3; ++i) {
+        angulos[i] = new float[num_pasosv2];
     }
+
+    for (int i = 0; i < num_pasosv2; ++i) {
+        /*x_pasos[i] = x_inicio + (x_fin - x_inicio) * i / (num_pasosv2 - 1);
+        y_pasos[i] = y_inicio + (y_fin - y_inicio) * i / (num_pasosv2 - 1);
+        z_pasos[i] = z_inicio + (z_fin - z_inicio) * i / (num_pasosv2 - 1);*/
+        x_pasos[i] = num_pasosv2 == 1 ? x_inicio : x_inicio + (x_fin - x_inicio) * i / (num_pasosv2 - 1);
+        y_pasos[i] = num_pasosv2 == 1 ? y_inicio : y_inicio + (y_fin - y_inicio) * i / (num_pasosv2 - 1);
+        z_pasos[i] = num_pasosv2 == 1 ? z_inicio : z_inicio + (z_fin - z_inicio) * i / (num_pasosv2 - 1);
+
+        struct nums angles = FnInvKinem(x_pasos[i], y_pasos[i], z_pasos[i]);
+
+        //Serial.printf("Angulos[0][%i]: %f\n", i, angles.uno);
+
+        angulos[0][i] = angles.uno;
+        angulos[1][i] = angles.dos;
+        angulos[2][i] = angles.tres;
+    }
+    
     return angulos;
 }
 

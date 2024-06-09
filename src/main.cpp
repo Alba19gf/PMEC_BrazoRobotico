@@ -2,47 +2,29 @@
 #include <SPI.h>
 #include "../include/Almar.h"
 
-hw_timer_t *timer = NULL;
-
-int ctrl = false;
-void IRAM_ATTR timerCtrl() {
- ctrl = true;
-}
-
 const float dt = 0.05;
 
 float tol_global = 0.5;
 float tol_local = 0.1;
 
-float error_global[N_MOTORS];
-float error_local[N_MOTORS];
+float error_global[N_MOTORS] = {1, 1, 1};
+float error_local[N_MOTORS] = {1, 1, 1};
 
 // Base motor 0
 // Shoulder motor 1
 // Elbow motor 2
-
-/*double pasos[N_MOTORS][5] = {
-                          {-20, -20+1.3*1, -20+1.3*2, -20+1.3*3, -20+1.3*4},
-                          {0+0.9*0, 0+0.9*1, 0+0.9*2, 0+0.9*3, 0+0.9*4},
-                          {0+1.16*0, 0+1.16*1, 0+1.16*2, 0+1.16*3, 0+1.16*4}
-    };*/
-
-int i = 0;  // motor
 int j = 0; // step
+int p = 1; // step
 
 float** steps;
 
 float origin[3] = {0, 0, 0};
 
-nums c9 = {39, 290, -145};
-nums c8 = {0, 290, -145};
-nums c7 = {-39, 290, -145};
-nums c6 = {39, 330, -145};
-nums c5 = {0, 330, -145};
-nums c4 = {-39, 330, -145};
-nums c3 = {39, 369, -145};
-nums c2 = {0, 369, -145};
-nums c1 = {-39, 369, -145};
+hw_timer_t *timer = NULL;
+int ctrl = false;
+void IRAM_ATTR timerCtrl() {
+ ctrl = true;
+}
 
 void setup() {
    // Inicializamos el timer
@@ -72,6 +54,7 @@ void setup() {
   // TCP
   cmd.AddCommand(&cmd_set_tcp_);
   cmd.AddCommand(&cmd_get_tcp_);
+  cmd.AddCommand(&cmd_goto_);
 
   if(DEBUG & DEBUG_INFO != 0)
     Serial.printf("Serial ready!\n");
@@ -105,10 +88,21 @@ void setup() {
     //pastPos[i] = (float) _enc->Read(i)*(360.0/4096.0);
   }
 
+  // Calculamos la corrección del error de los encoders para la posición 5
   nums temp = FnInvKinem(0, 330, -145);
   origin[0] = temp.uno;
   origin[1] = temp.dos;
   origin[2] = temp.tres;
+
+  // Inicializamos la posición deseada
+  pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
+  pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
+  pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
+
+  nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
+    des_tcp[0] = curr_tcp.uno;
+    des_tcp[1] = curr_tcp.dos;
+    des_tcp[2] = curr_tcp.tres;
 }
 
 void loop() {
@@ -152,70 +146,70 @@ void loop() {
     pos[1] += origin[1];
     pos[2] += origin[2];
 
-    nums dir_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
-    tcp[0] = dir_tcp.uno;
-    tcp[1] = dir_tcp.dos;
-    tcp[2] = dir_tcp.tres;
+    nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
+    tcp[0] = curr_tcp.uno;
+    tcp[1] = curr_tcp.dos;
+    tcp[2] = curr_tcp.tres;
 
-    steps = arrayTLinealv2(tcp[0], tcp[1], tcp[2], 0, 290, -145);    
-    int rows = sizeof(steps)/sizeof(steps[0]);
-    int cols = sizeof(steps[0])/sizeof(steps[0][0]);
+    int num_pasos_x = ceil(abs(des_tcp[0]-tcp[0])/10);
+    int num_pasos_y = ceil(abs(des_tcp[1]-tcp[1])/10);
+    int num_pasos_z = ceil(abs(des_tcp[2]-tcp[2])/10);
+    
+    int num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
+    num_pasosv2 = MAX(num_pasosv2, num_pasos_z);
 
-    // Asignamos la nueva posición deseada
-    desPos[0] = steps[0][cols];
-    desPos[1] = steps[1][cols];
-    desPos[2] = steps[2][cols];
+    steps = arrayTLinealv2(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2]);
+    error_global[0] = abs(pos[0] - steps[0][num_pasosv2-1]);
+    desPos[0] = steps[0][p];
 
-      // Calculamos el error global
-      error_global[i] = abs(pos[i] - steps[i][cols]);
-
-      // Comprobamos si hemos llegado a la posición deseada final
-      if(error_global[i] > tol_global)
+    if(error_global[0] > tol_global && num_pasosv2 > 1)
+    {
+      error_local[0] = abs(pos[0] - steps[0][p]);
+      if(error_local[0] < tol_local)
       {
-        // Calculamos el error local
-        error_local[i] = abs(pos[i] - steps[i][j]);
-
-        dutyCycle[i] = _pid[i]->calc(pos[i], desPos[i]);
-        //_m[i]->SetDuty(dutyCycle[i]);
-
-        //if(error_local[i] < tol_local)
-        if(error_local[i] < tol_local && pos[i] < steps[i][j+1])
-        {
-          // Cambiamos de paso
-          j++;
-          if(j > 4)
-            j = 4;
-
-          _pid[i]->reset();
-          Serial.printf("desPos[%i]: %f\n", i, desPos[i]);
-          Serial.printf("pasos[%i][%i]: %f\n", i, j, steps[i][j]);
-        }
+        p++;
+        if(p > num_pasosv2)
+          p = num_pasosv2;
       }
       else
       {
-        _m[i]->SetDuty(0.05);
-        _pid[i]->reset();
+        dutyCycle[0] = _pid[0]->calc(pos[0], steps[0][p]);
+        _m[0]->SetDuty(dutyCycle[0]);
       }
-    
+    }
+    else
+    {
+      _m[0]->SetDuty(0.05);
+      _pid[0]->reset();
+      p = 1;
+    }
 
-    Serial.printf(">pos[0]: %f\n", pos[0]);
-    Serial.printf(">pos[1]: %f\n", pos[1]);
-    Serial.printf(">pos[2]: %f\n", pos[2]);
+     Serial.printf(">pos[0]: %f\n", pos[0]);
+        Serial.printf(">pos[1]: %f\n", pos[1]);
+        Serial.printf(">pos[2]: %f\n", pos[2]);
 
-    Serial.printf(">tcp[x]: %f\n", tcp[0]);
-    Serial.printf(">tcp[y]: %f\n", tcp[1]);
-    Serial.printf(">tcp[z]: %f\n", tcp[2]);
+        Serial.printf(">tcp[x]: %f\n", tcp[0]);
+        Serial.printf(">tcp[y]: %f\n", tcp[1]);
+        Serial.printf(">tcp[z]: %f\n", tcp[2]);
 
-    Serial.printf(">desPos[0]: %f\n", desPos[0]);
-    Serial.printf(">error_global[0]: %f\n", error_global[0]);
-    Serial.printf(">error_local[0]: %f\n", error_local[0]);
-    Serial.printf(">error[0]: %f\n", _pid[0]->_error);
-    Serial.printf(">P[0]:%f\n", _pid[0]->__P);
-    Serial.printf(">I[0]:%f\n", _pid[0]->_I);
-    Serial.printf(">D[0]:%f\n", _pid[0]->_D);
-    Serial.printf(">PID[0]:%f\n", _pid[0]->_PID);
+        Serial.printf(">desPos[0]: %f\n", desPos[0]);
+        Serial.printf(">desPos[1]: %f\n", desPos[1]);
+        Serial.printf(">desPos[2]: %f\n", desPos[2]);
 
+        Serial.printf(">des_tcp[x]: %f\n", des_tcp[0]);
+        Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
+        Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
 
+        Serial.printf(">error_global[0]: %f\n", error_global[0]);
+        Serial.printf(">error_local[0]: %f\n", error_local[0]);
+        Serial.printf(">error[0]: %f\n", _pid[0]->_error);
+        Serial.printf(">P[0]:%f\n", _pid[0]->__P);
+        Serial.printf(">I[0]:%f\n", _pid[0]->_I);
+        Serial.printf(">D[0]:%f\n", _pid[0]->_D);
+        Serial.printf(">PID[0]:%f\n", _pid[0]->_PID);
+
+        Serial.printf(">p:%i\n", p);
+        Serial.printf(">num_pasosv2: %i\n", num_pasosv2);
     /*desPos[i] = pasos[i][j];
     desPos[i+1] = pasos[i+1][j];
     desPos[i+2] = pasos[i+2][j];

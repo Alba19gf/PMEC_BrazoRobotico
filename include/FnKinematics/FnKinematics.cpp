@@ -62,9 +62,9 @@ struct nums FnInvKinem(float x, float y, float z) {
     struct nums angulos;
 
     // Si el punto indicado por la generación de trayectorias estña fuera del espacio de trabajo se indica en la ventana de comandos
-    if ((x < -95) || (x > 95) ||(y < 220) || (y > 440) || (z < -150) || (z > 40)) {
+    /*if ((x < -95) || (x > 95) ||(y < 220) || (y > 440) || (z < -150) || (z > 40)) {
         printf("\nEl punto deseado se encuentra de fuera de la zona de juego \n");
-    }
+    }*/
 
     // El plano y el ángulo de la base se definen simplemente en base a las coordenadas X e Y
     w = sqrt(pow(x,2)+pow(y,2));

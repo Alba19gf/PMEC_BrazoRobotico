@@ -34,7 +34,7 @@ const int led_2 = 41;
 // Constantes control (KP, KI, KD)
 // Rango control (max, min, windup)
 double motor[3][10] = { 
-                      {0, 4, 5, 25000, 0.4, 0.04, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
+                      {0, 4, 5, 25000, 0.2, 0.04, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
                       {45, 7, 6, 25000, 0.29, 0.06, 0.00, 360, -360, 0.4},      // Motor 2
                       {39, 9, 10, 25000, 0.30, 0.03, 0.00, 360, -360, 0.6}      // Motor 3
                     };
@@ -59,6 +59,17 @@ float pastPos[N_MOTORS] = {};
 // Control TCP
 float tcp[N_MOTORS];
 float des_tcp[N_MOTORS];
+
+// Posiciones tablero
+float c9[3] = {39.0,  290.0, -145.0};
+float c8[3] = { 0.0,  290.0, -145.0};
+float c7[3] = {-39.0, 290.0, -145.0};
+float c6[3] = {39.0,  330.0, -145.0};
+float c5[3] = { 0.0,  330.0, -145.0};
+float c4[3] = {-39.0, 330.0, -145.0};
+float c3[3] = {39.0,  369.0, -145.0};
+float c2[3] = { 0.0,  369.0, -145.0};
+float c1[3] = {-39.0, 369.0, -145.0};
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -379,6 +390,74 @@ void cmd_get_tcp(SerialCommands* sender)
   Serial.printf("TCP position: x:%f, y:%f, z:%f\n", tcp[0], tcp[1], tcp[2]);
 }
 
+void cmd_goto(SerialCommands* sender)
+{
+  char* n_str = sender->Next();
+  
+  if(n_str == NULL)
+  {
+    Serial.println("ERROR NO_ARGS");
+    return;
+  }
+
+  int n = atoi(n_str);
+
+  if(n < 0 || n > 9)
+  {
+    Serial.printf("Position number out of range: %i\n", n);
+    return;
+  }
+
+  switch(n) 
+  {
+    case 1:
+      des_tcp[0] = c1[0];
+      des_tcp[1] = c1[1];
+      des_tcp[2] = c1[2];
+      break;
+    case 2:
+      des_tcp[0] = c2[0];
+      des_tcp[1] = c2[1];
+      des_tcp[2] = c2[2];
+      break;
+    case 3:
+      des_tcp[0] = c3[0];
+      des_tcp[1] = c3[1];
+      des_tcp[2] = c3[2];
+      break;
+    case 4:
+      des_tcp[0] = c4[0];
+      des_tcp[1] = c4[1];
+      des_tcp[2] = c4[2];
+      break;
+    case 5:
+      des_tcp[0] = c5[0];
+      des_tcp[1] = c5[1];
+      des_tcp[2] = c5[2];
+      break;
+    case 6:
+      des_tcp[0] = c6[0];
+      des_tcp[1] = c6[1];
+      des_tcp[2] = c6[2];
+      break;
+    case 7:
+      des_tcp[0] = c7[0];
+      des_tcp[1] = c7[1];
+      des_tcp[2] = c7[2];
+      break;
+    case 8:
+      des_tcp[0] = c8[0];
+      des_tcp[1] = c8[1];
+      des_tcp[2] = c8[2];
+      break;
+    case 9:
+      des_tcp[0] = c9[0];
+      des_tcp[1] = c9[1];
+      des_tcp[2] = c9[2];
+      break;
+  }
+}
+
 SerialCommand cmd_set_debug_("SET_DEBUG", set_debug);
 
 SerialCommand cmd_set_led1_("SET_LED1", cmd_set_led1);
@@ -397,3 +476,5 @@ SerialCommand cmd_get_motor_info_("GET_MOTOR_INFO", cmd_get_motor_info);
 
 SerialCommand cmd_set_tcp_("SET_TCP", cmd_set_tcp);
 SerialCommand cmd_get_tcp_("GET_TCP", cmd_get_tcp);
+
+SerialCommand cmd_goto_("GOTO", cmd_goto);
