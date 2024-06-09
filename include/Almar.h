@@ -34,9 +34,9 @@ const int led_2 = 41;
 // Constantes control (KP, KI, KD)
 // Rango control (max, min, windup)
 double motor[3][10] = { 
-                      {0, 4, 5, 25000, 0.2, 0.04, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
-                      {45, 7, 6, 25000, 0.29, 0.06, 0.00, 360, -360, 0.4},      // Motor 2
-                      {39, 9, 10, 25000, 0.30, 0.03, 0.00, 360, -360, 0.6}      // Motor 3
+                      {0, 4, 5, 25000, 0.25, 0.01, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
+                      {45, 6, 7, 25000, 0.2, 0.00, 0.00, 360, -360, 0.4},      // Motor 2
+                      {39, 10, 9, 25000, 0.2, 0.00, 0.00, 360, -360, 0.6}      // Motor 3
                     };
 // Cantidad motores
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);

@@ -13,8 +13,9 @@ float error_local[N_MOTORS] = {1, 1, 1};
 // Base motor 0
 // Shoulder motor 1
 // Elbow motor 2
-int j = 0; // step
+int j = 1; // step
 int p = 1; // step
+int q = 1; // step
 
 float** steps;
 
@@ -99,10 +100,41 @@ void setup() {
   pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
   pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
 
+   // Corrección 360 grados
+    if((pos[0] - pastPos[0]) < -180)
+          pos[0] += 360;
+    else if((pos[0] - pastPos[0]) > 180)
+          pos[0] -= 360;
+
+    if((pos[1] - pastPos[1]) < -180)
+          pos[1] += 360;
+    else if((pos[1] - pastPos[1]) > 180)
+          pos[1] -= 360;
+
+    if((pos[2] - pastPos[2]) < -180)
+          pos[2] += 360;
+    else if((pos[2] - pastPos[2]) > 180)
+          pos[2] -= 360;
+
+    pastPos[0] = pos[0];
+    pastPos[1] = pos[1];
+    pastPos[2] = pos[2];
+
+    // Corrección direcciones
+    pos[1] = -pos[1];
+    pos[2] = -pos[2];
+    // Corrección relación engranajes
+    pos[1] = pos[1]*6/7;
+    pos[2] = pos[2]*11/18;
+    // Corrección origen
+    pos[0] += origin[0];
+    pos[1] += origin[1];
+    pos[2] += origin[2];
+
   nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
-    des_tcp[0] = curr_tcp.uno;
-    des_tcp[1] = curr_tcp.dos;
-    des_tcp[2] = curr_tcp.tres;
+  des_tcp[0] = curr_tcp.uno;
+  des_tcp[1] = curr_tcp.dos;
+  des_tcp[2] = curr_tcp.tres;
 }
 
 void loop() {
@@ -159,6 +191,8 @@ void loop() {
     num_pasosv2 = MAX(num_pasosv2, num_pasos_z);
 
     steps = arrayTLinealv2(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2]);
+
+    // Motor 0
     error_global[0] = abs(pos[0] - steps[0][num_pasosv2-1]);
     desPos[0] = steps[0][p];
 
@@ -184,13 +218,91 @@ void loop() {
       p = 1;
     }
 
-     Serial.printf(">pos[0]: %f\n", pos[0]);
+    // Motor 1
+    error_global[1] = abs(pos[1] - steps[1][num_pasosv2-1]);
+    desPos[1] = steps[1][q];
+
+    if(error_global[1] > tol_global && num_pasosv2 > 1)
+    {
+      error_local[1] = abs(pos[1] - steps[1][q]);
+      if(error_local[1] < tol_local)
+      {
+        q++;
+        if(q > num_pasosv2)
+          q = num_pasosv2;
+      }
+      else
+      {
+        dutyCycle[1] = _pid[1]->calc(pos[1], steps[1][q]);
+        _m[1]->SetDuty(dutyCycle[1]);
+      }
+    }
+    else
+    {
+      _m[1]->SetDuty(0.05);
+      _pid[1]->reset();
+      q = 1;
+    }
+
+    // Motor 2
+    error_global[2] = abs(pos[2] - steps[2][num_pasosv2-1]);
+    desPos[2] = steps[2][j];
+
+    if(error_global[2] > tol_global && num_pasosv2 > 1)
+    {
+      error_local[2] = abs(pos[2] - steps[2][j]);
+      if(error_local[2] < tol_local)
+      {
+        j++;
+        if(j > num_pasosv2)
+          j = num_pasosv2;
+      }
+      else
+      {
+        dutyCycle[2] = _pid[2]->calc(pos[2], steps[2][j]);
+        _m[2]->SetDuty(dutyCycle[2]);
+      }
+    }
+    else
+    {
+      _m[2]->SetDuty(0.05);
+      _pid[2]->reset();
+      j = 1;
+    }
+
+    for(int i = 0; i < N_MOTORS; i++)
+    {
+      if(i < 4)
+      {
+        Serial.printf(">pos[%i]: %f\n", i, pos[i]);
+        Serial.printf(">desPos[%i]: %f\n", i, desPos[i]);
+        Serial.printf(">error_global[%i]: %f\n", i, error_global[i]);
+        Serial.printf(">error_local[%i]: %f\n", i, error_local[i]);
+        Serial.printf(">error[%i]: %f\n", i, _pid[i]->_error);
+        Serial.printf(">P[%i]:%f\n", i, _pid[i]->__P);
+        Serial.printf(">I[%i]:%f\n", i, _pid[i]->_I);
+        Serial.printf(">D[%i]:%f\n", i, _pid[i]->_D);
+        Serial.printf(">PID[%i]:%f\n", i, _pid[i]->_PID);
+      }
+    }
+
+    Serial.printf(">num_pasosv2: %i\n", num_pasosv2);
+    Serial.printf(">p: %i\n", p);
+    Serial.printf(">q: %i\n", q);
+    Serial.printf(">j: %i\n", j);
+
+    Serial.printf(">tcp[x]: %f\n", tcp[0]);
+    Serial.printf(">tcp[y]: %f\n", tcp[1]);
+    Serial.printf(">tcp[z]: %f\n", tcp[2]);
+    Serial.printf(">des_tcp[x]: %f\n", des_tcp[0]);
+    Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
+    Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
+
+     /*Serial.printf(">pos[0]: %f\n", pos[0]);
         Serial.printf(">pos[1]: %f\n", pos[1]);
         Serial.printf(">pos[2]: %f\n", pos[2]);
 
-        Serial.printf(">tcp[x]: %f\n", tcp[0]);
-        Serial.printf(">tcp[y]: %f\n", tcp[1]);
-        Serial.printf(">tcp[z]: %f\n", tcp[2]);
+        
 
         Serial.printf(">desPos[0]: %f\n", desPos[0]);
         Serial.printf(">desPos[1]: %f\n", desPos[1]);
@@ -209,7 +321,7 @@ void loop() {
         Serial.printf(">PID[0]:%f\n", _pid[0]->_PID);
 
         Serial.printf(">p:%i\n", p);
-        Serial.printf(">num_pasosv2: %i\n", num_pasosv2);
+        Serial.printf(">num_pasosv2: %i\n", num_pasosv2);*/
     /*desPos[i] = pasos[i][j];
     desPos[i+1] = pasos[i+1][j];
     desPos[i+2] = pasos[i+2][j];
