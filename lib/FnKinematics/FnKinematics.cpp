@@ -110,7 +110,7 @@ struct nums FnInvKinem(float x, float y, float z) {
     ang_e = -(asin((P2[1]-P1[1])/L2)-PI/2+ang_s);
 
     // Se realiza la conversión para dar el resultado en grados
-    ang_b = ang_b*360/(2*PI);
+    ang_b = ang_b*360/(2*PI);   // Realizar aquí el ajuste de la calibración, lo que ca,biemos se refleja en la salida de las trayectorias
     ang_s = ang_s*360/(2*PI);
     ang_e = ang_e*360/(2*PI);
 

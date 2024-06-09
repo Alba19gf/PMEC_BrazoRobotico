@@ -94,18 +94,26 @@ int main() {
     // printf("TELIPSE_ult: %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\t %f\n", angulos1[142], angulos1[143], angulos1[144], angulos1[145], angulos1[146], angulos1[147], angulos1[148], angulos1[149], angulos1[150]);
 
     // VAMOS A HACERLO AHORA TRABAJANDO CON UNA MATRIZ
-    float** angulos2; // Importante, las variables tipo float** declararlas en líneas diferentes, sino da problema
+    float** angulos1; // Importante, las variables tipo float** declararlas en líneas diferentes, sino da problema
+    float** angulos2;
     float** angulos3;
 
-    angulos2 = arrayTLineal(rob1.uno, rob1.dos, rob1.tres, pos9.uno, pos9.dos, pos9.tres);
+    // SIMULACIÓN DEL MOVIMIENTO DESEADO DEL ROBOT CON TRAYECTORIAS RECTILÍNEAS
+    angulos1 = arrayTLineal(rob1.uno, rob1.dos, rob1.tres, rob1.uno, rob1.dos, rob1.tres+40);
 
-    //for (int i = 0; i < num_pasos; i++) {
-    //    printf("TLINEAL %d: %2.3f \t %2.3f \t %2.3f \n", i, angulos2[i][0], angulos2[i][1], angulos2[i][2]);
-    //}
+    for (int i = 0; i < num_pasos; i++) {
+        printf("TLINEAL %d: %2.3f \t %2.3f \t %2.3f \n", i, angulos1[i][0], angulos1[i][1], angulos1[i][2]);
+    }
 
-    angulos3 = arrayTelipse(rob1.uno, rob1.dos, pos9.uno, pos9.dos);
-    
-     for (int i = 0; i < num_pasos; i++) {
-          printf("TELIPSE %d: %2.3f \t %2.3f \t %2.3f \n", i, angulos3[i][0], angulos3[i][1], angulos3[i][2]);
+    angulos2 = arrayTLineal(rob1.uno, rob1.dos, rob1.tres+40, pos9.uno, pos9.dos, pos9.tres+40);
+
+    for (int i = 0; i < num_pasos; i++) {
+        printf("TLINEAL %d: %2.3f \t %2.3f \t %2.3f \n", i+50, angulos2[i][0], angulos2[i][1], angulos2[i][2]);
+    }
+
+    angulos3 = arrayTLineal(pos9.uno, pos9.dos, pos9.tres+40, pos9.uno, pos9.dos, pos9.tres);
+
+    for (int i = 0; i < num_pasos; i++) {
+        printf("TLINEAL %d: %2.3f \t %2.3f \t %2.3f \n", i+100, angulos3[i][0], angulos3[i][1], angulos3[i][2]);
     }
 }
