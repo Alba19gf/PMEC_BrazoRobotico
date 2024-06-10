@@ -1,33 +1,49 @@
+//* ALGORITMO DE JUEGO AUTOMÁTICO
+//Este código implementa un juego de tres en raya (tic-tac-toe) en el que el robot calcula su mejor movimiento usando el algoritmo Minimax y realiza su jugada. 
+//La función Fn_MatrizState actualiza el estado del tablero desde una fuente externa, y el programa convierte ese estado a una representación interna para procesar el juego.
+
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h>  // Para INT_MIN y INT_MAX
 
-#define SIZE 3
+#define SIZE 3 // Definir tablero de 3x3 
 
 // Declarar la matriz global
 int MatrizEstado[SIZE][SIZE];
 
-// Declarar la función externa
-extern void Fn_MatrizState();
+// Declarar la función externa para recibir la matriz de visión
+//extern void Fn_MatrizState();
+
+
+void Fn_MatrizState() {
+    // Actualiza MatrizEstado con un estado de prueba
+    int estado_prueba[SIZE][SIZE] = {
+        {-1, 2, -1},
+        {2, 1, 2},
+        {2, 1, 2}
+    };
+    memcpy(MatrizEstado, estado_prueba, sizeof(estado_prueba));
+}
+
 
 void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             if (MatrizEstado[i][j] == 2)
-                MatrizEstadoNuevo[i][j] = 0;  // Espacios vacíos se convierten a 0
+                MatrizEstadoNuevo[i][j] = 0;  // CASILLAS VACÍAS se convierten a 0 
             else if (MatrizEstado[i][j] == 0)
-                MatrizEstadoNuevo[i][j] = -1;  // Cambia de representación 0 a -1
+                MatrizEstadoNuevo[i][j] = -1;  // Cambia de representación 0 a -1  JUGADOR HUMANO
             else
-                MatrizEstadoNuevo[i][j] = 1;  // Los demás valores se mantienen como 1
+                MatrizEstadoNuevo[i][j] = 1;  // Los demás valores se mantienen como 1  JUGADOR ROBOT
         }
     }
 }
 
 int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
     int combinaciones[8][3][2] = {
-        {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // filas
-        {{0, 0}, {1, 0}, {2, 0}}, {{0, 1}, {1, 1}, {2, 1}}, {{0, 2}, {1, 2}, {2, 2}}, // columnas
-        {{0, 0}, {1, 1}, {2, 2}}, {{0, 2}, {1, 1}, {2, 0}}  // diagonales
+        {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
+        {{0, 0}, {1, 0}, {2, 0}}, {{0, 1}, {1, 1}, {2, 1}}, {{0, 2}, {1, 2}, {2, 2}}, // Combinaciones para columnas
+        {{0, 0}, {1, 1}, {2, 2}}, {{0, 2}, {1, 1}, {2, 0}}  // Combinaciones para diagonales
     };
 
     *empate = 1;  // Asume empate inicialmente
@@ -51,8 +67,10 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
     }
 
     return 0;  // Si no hay ganador y no hay espacios vacíos, es empate
+    // Si el robot ha ganado 1
+    // Si el humano ha ganado -1
 }
-
+//Algoritmo minimax explora rodas las posibles jugadas futuras y elegir la que maximiza la puntuación del robot
 int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) {
     int empate;
     int ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
@@ -96,6 +114,8 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) {
     }
 }
 
+// La función mov_optimo utiliza el algoritmo minimax para encontar la mejor jugada posible para el robot
+// Actualiza la fila y columna con las coordenadas de la mejor jugada
 void mov_optimo(int MatrizEstadoNuevo[SIZE][SIZE], int *fila, int *columna) {
     int mejor_puntuacion = INT_MIN;
 
@@ -122,6 +142,7 @@ void setup() {
     // Llamar a la función externa para actualizar MatrizEstado
     Fn_MatrizState();
 
+    // Convertir MatrizEstado a MatrizEstadoNuevo
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
@@ -134,11 +155,12 @@ void setup() {
         Serial.println("El jugador humano ha ganado.");
     } else if (empate) {
         Serial.println("El juego ha terminado en empate.");
-    } else {
+    } else { // Si no hay ganador se encuentra el mejor movimiento para el robot
         int fila, columna;
         mov_optimo(MatrizEstadoNuevo, &fila, &columna);
         MatrizEstadoNuevo[fila][columna] = 1;
 
+        // Se vuelve a comprobar el ganador
         ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
 
         Serial.print("La máquina debe hacer su próximo movimiento en la fila ");
