@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ESP32Servo.h>
 
 // Constante para mensajes de debug 
 #define DEBUG_INFO    1
@@ -30,6 +31,8 @@ const int led_1 = 40;
 const int led_2 = 41;
 
 // Gripper
+#define MOTOR_PINZA_PIN 11
+Servo motorPinza;
 
 
 // CONFIGURACIÓN MOTORES
@@ -40,9 +43,9 @@ double motor[3][10] = {
                       /*{0, 5, 4, 25000, 0.27, 0.05, 0.0005, 360, -360, 0.625},         // Motor 1 con 500g
                       {45, 7, 6, 25000, 0.3, 0.00, 0.00, 360, -360, 0.625},      // Motor 2
                       {39, 10, 9, 25000, 0.2, 0.00, 0.00, 360, -360, 0.6}      // Motor 3*/
-                      {0, 5, 4, 25000, 0.3, 0.1, 0.00, 360, -360, 0.2},         // Motor 1 con 500g
-                      {45, 7, 6, 25000, 0.3, 0.1, 0.00, 360, -360, 0.2},      // Motor 2
-                      {39, 10, 9, 25000, 0.3, 0.1, 0.00, 360, -360, 0.2}      // Motor 3
+                      {0, 5, 4, 25000, 0.3, 0.1, 0.00, 360, -360, 0.3},         // Motor 1 con 500g
+                      {45, 7, 6, 25000, 0.45, 0.1, 0.00, 360, -360, 0.3},      // Motor 2
+                      {39, 10, 9, 25000, 0.4, 0.1, 0.00, 360, -360, 0.3}      // Motor 3
                     };
 // Cantidad motores
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
@@ -124,12 +127,19 @@ void goSafe()
 
 void openGripper()
 {
-
+  motorPinza.write(0);
 }
 
 void closeGripper()
 {
+  motorPinza.write(32);
+}
 
+void goTCP(float x, float y, float z)
+{
+  des_tcp[0] = x;
+  des_tcp[1] = y;
+  des_tcp[2] = z;
 }
 
 void cmd_goZ(SerialCommands* sender)
@@ -140,6 +150,16 @@ void cmd_goZ(SerialCommands* sender)
 void cmd_goSafe(SerialCommands* sender)
 {
   goSafe();
+}
+
+void cmd_openGripper(SerialCommands* sender)
+{
+  openGripper();
+}
+
+void cmd_closeGripper(SerialCommands* sender)
+{
+  closeGripper();
 }
 
 //This is the default handler, and gets called when no other command matches. 
@@ -420,10 +440,7 @@ void cmd_set_tcp(SerialCommands* sender)
   {
     Serial.printf("Setting position to x:%f, y:%f, z:%f\n", x, y, z);
   }
-
-  des_tcp[0] = x;
-  des_tcp[1] = y;
-  des_tcp[2] = z;
+  goTCP(x, y, z);
 }
 
 void cmd_get_tcp(SerialCommands* sender)
@@ -519,3 +536,8 @@ SerialCommand cmd_set_tcp_("SET_TCP", cmd_set_tcp);
 SerialCommand cmd_get_tcp_("GET_TCP", cmd_get_tcp);
 
 SerialCommand cmd_goto_("GOTO", cmd_goto);
+
+SerialCommand cmd_goZ_("GO_Z", cmd_goZ);
+SerialCommand cmd_goSafe_("GO_SAFE", cmd_goSafe);
+SerialCommand cmd_openGripper_("OPEN_GRIPPER", cmd_openGripper);
+SerialCommand cmd_closeGripper_("CLOSE_GRIPPER", cmd_closeGripper);

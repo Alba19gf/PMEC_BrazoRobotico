@@ -124,10 +124,10 @@ float PID::calc(float currentValue, float desiredValue)
 
     _I = _Ki * _sum_error;
     // Parte integrativa mismo sentido que el error
-    /*if(_P < 0 && _I > 0 || __P > 0 && _I < 0)
+    if(_P < 0 && _I > 0 || __P > 0 && _I < 0)
     {
-        _I = -_I;
-    }*/
+        _I = -1*_I;
+    }
     
     _D = (_Kd/_dt) * (_error - _pre_error);
     

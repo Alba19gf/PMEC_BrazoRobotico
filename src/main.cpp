@@ -117,6 +117,11 @@ void setup() {
   des_tcp[0] = tcp[0];
   des_tcp[1] = tcp[1];
   des_tcp[2] = tcp[2];
+
+  pastTcp[0] = des_tcp[0];
+  pastTcp[1] = des_tcp[1];
+  pastTcp[2] = des_tcp[2];
+  
   init_ctrl = 1;
 }
 
@@ -125,7 +130,6 @@ void loop() {
 
   if(ctrl)
   {
-    setPastPos:
     // Lectura de los encoders (0, 1, 2)
     pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
     pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
@@ -150,12 +154,7 @@ void loop() {
     pastPos[0] = pos[0];
     pastPos[1] = pos[1];
     pastPos[2] = pos[2];
-
-    if(init_ctrl)
-    {
-      init_ctrl = 0;
-      goto setPastPos;
-    }
+    
     // Corrección direcciones
     pos[1] = -pos[1];
     pos[2] = -pos[2];
@@ -172,7 +171,7 @@ void loop() {
     tcp[1] = curr_tcp.dos;
     tcp[2] = curr_tcp.tres;
 
-    if(pastTcp[0] != des_tcp[0] || pastTcp[1] != des_tcp[1] || pastTcp[2] != des_tcp[2])
+    if(pastTcp[0] != des_tcp[0] || pastTcp[1] != des_tcp[1] || pastTcp[2] != des_tcp[2] || init_ctrl)
     {
       steps_x = tLineal_x(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_x);
       steps_y = tLineal_y(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_y);
@@ -255,7 +254,7 @@ void loop() {
           if(q == n_steps_y)
           {
             q = n_steps_y-1;
-            //_pid[1]->reset();
+            _pid[1]->reset();
           }
       }
       
