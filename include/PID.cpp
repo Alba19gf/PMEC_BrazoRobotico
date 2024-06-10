@@ -87,6 +87,7 @@ int PID::reset()
 {
     _pre_error = 0.0;
     _sum_error = 0.0;
+    _error = 0.0;
     return 0;
 }
 
@@ -108,6 +109,11 @@ float PID::calc(float currentValue, float desiredValue)
 
     __P = _Kp * _error;
 
+    if(__P >= 0.6)
+        __P = 0.6;
+    if(__P <= -0.6)
+        __P = -0.6;
+
     // Windup??? TODO: Max Windup and Min Windup
     // TODO: Check if this is the correct way to implement Windup
     // Windup para parte integral
@@ -118,10 +124,10 @@ float PID::calc(float currentValue, float desiredValue)
 
     _I = _Ki * _sum_error;
     // Parte integrativa mismo sentido que el error
-    if(_P < 0 && _I > 0 || __P > 0 && _I < 0)
+    /*if(_P < 0 && _I > 0 || __P > 0 && _I < 0)
     {
         _I = -_I;
-    }
+    }*/
     
     _D = (_Kd/_dt) * (_error - _pre_error);
     

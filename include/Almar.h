@@ -29,14 +29,20 @@ int DEBUG = DEBUG_ALL;
 const int led_1 = 40;
 const int led_2 = 41;
 
+// Gripper
+
+
 // CONFIGURACIÓN MOTORES
 // Pines motores (EN, IN1, IN2, PWM)
 // Constantes control (KP, KI, KD)
 // Rango control (max, min, windup)
 double motor[3][10] = { 
-                      {0, 4, 5, 25000, 0.25, 0.01, 0.00, 360, -360, 0.6},         // Motor 1 con 500g
-                      {45, 6, 7, 25000, 0.2, 0.00, 0.00, 360, -360, 0.4},      // Motor 2
-                      {39, 10, 9, 25000, 0.2, 0.00, 0.00, 360, -360, 0.6}      // Motor 3
+                      /*{0, 5, 4, 25000, 0.27, 0.05, 0.0005, 360, -360, 0.625},         // Motor 1 con 500g
+                      {45, 7, 6, 25000, 0.3, 0.00, 0.00, 360, -360, 0.625},      // Motor 2
+                      {39, 10, 9, 25000, 0.2, 0.00, 0.00, 360, -360, 0.6}      // Motor 3*/
+                      {0, 5, 4, 25000, 0.3, 0.1, 0.00, 360, -360, 0.2},         // Motor 1 con 500g
+                      {45, 7, 6, 25000, 0.3, 0.1, 0.00, 360, -360, 0.2},      // Motor 2
+                      {39, 10, 9, 25000, 0.3, 0.1, 0.00, 360, -360, 0.2}      // Motor 3
                     };
 // Cantidad motores
 const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
@@ -54,22 +60,27 @@ float dutyCycle[N_MOTORS] = {};
 // Control motores
 float desPos[N_MOTORS] = {0, 0, 0};
 float pos[N_MOTORS] = {};
-float pastPos[N_MOTORS] = {};
+float pastPos[N_MOTORS] = {0,0,0};
 
 // Control TCP
 float tcp[N_MOTORS];
 float des_tcp[N_MOTORS];
 
 // Posiciones tablero
-float c9[3] = {39.0,  290.0, -145.0};
-float c8[3] = { 0.0,  290.0, -145.0};
-float c7[3] = {-39.0, 290.0, -145.0};
-float c6[3] = {39.0,  330.0, -145.0};
-float c5[3] = { 0.0,  330.0, -145.0};
-float c4[3] = {-39.0, 330.0, -145.0};
-float c3[3] = {39.0,  369.0, -145.0};
-float c2[3] = { 0.0,  369.0, -145.0};
-float c1[3] = {-39.0, 369.0, -145.0};
+float _goZ = -145;
+float _goSafe = -100;
+
+float c9[3] = {39.0,  369.0, -100.0};
+float c8[3] = { 0.0,  369.0, -100.0};
+float c7[3] = {-39.0, 369.0, -100.0};
+float c6[3] = {39.0,  330.0, -100.0};
+float c5[3] = { 0.0,  330.0, -100.0};
+float c4[3] = {-39.0, 330.0, -100.0};
+float c3[3] = {39.0,  290.0, -100.0};
+float c2[3] = { 0.0,  290.0, -100.0};
+float c1[3] = {-39.0, 290.0, -100.0};
+float home[3] = {c1[0], c1[1], c1[2]};//;{0.0, 330.0, -100.0};
+
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -100,6 +111,36 @@ OPTIONAL:
 - SET_MOTOR_MAX [N] [MAX]
 - SET_MOTOR_MIN [N] [MIN]
 */
+
+void goZ()
+{
+  des_tcp[2] = _goZ;
+}
+
+void goSafe()
+{
+  des_tcp[2] = _goSafe;
+}
+
+void openGripper()
+{
+
+}
+
+void closeGripper()
+{
+
+}
+
+void cmd_goZ(SerialCommands* sender)
+{
+  goZ();
+}
+
+void cmd_goSafe(SerialCommands* sender)
+{
+  goSafe();
+}
 
 //This is the default handler, and gets called when no other command matches. 
 void cmd_unrecognized(SerialCommands* sender, const char* cmd)

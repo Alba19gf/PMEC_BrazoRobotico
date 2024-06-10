@@ -2,10 +2,11 @@
 #include <SPI.h>
 #include "../include/Almar.h"
 
-const float dt = 0.05;
+const float dt = 0.1;
 
-float tol_global = 0.5;
-float tol_local = 0.1;
+float tol_global = 0.6;
+float tol_local = 0.2;
+float tol_tcp = 0.5;
 
 float error_global[N_MOTORS] = {1, 1, 1};
 float error_local[N_MOTORS] = {1, 1, 1};
@@ -13,12 +14,21 @@ float error_local[N_MOTORS] = {1, 1, 1};
 // Base motor 0
 // Shoulder motor 1
 // Elbow motor 2
-int j = 1; // step
-int p = 1; // step
-int q = 1; // step
+int p = 0; // step
+int q = 0; // step
+int t = 0; // step
 
-float** steps;
+float* steps_x;
+int n_steps_x;
+float* steps_y;
+int n_steps_y;
+float* steps_z;
+int n_steps_z;
 
+int init_ctrl = 0;
+int init_pos = 0;
+
+float pastTcp[3] = {0, 0, 0};
 float origin[3] = {0, 0, 0};
 
 hw_timer_t *timer = NULL;
@@ -95,46 +105,19 @@ void setup() {
   origin[1] = temp.dos;
   origin[2] = temp.tres;
 
-  // Inicializamos la posición deseada
   pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
-  pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
+  pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
   pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
 
-   // Corrección 360 grados
-    if((pos[0] - pastPos[0]) < -180)
-          pos[0] += 360;
-    else if((pos[0] - pastPos[0]) > 180)
-          pos[0] -= 360;
-
-    if((pos[1] - pastPos[1]) < -180)
-          pos[1] += 360;
-    else if((pos[1] - pastPos[1]) > 180)
-          pos[1] -= 360;
-
-    if((pos[2] - pastPos[2]) < -180)
-          pos[2] += 360;
-    else if((pos[2] - pastPos[2]) > 180)
-          pos[2] -= 360;
-
-    pastPos[0] = pos[0];
-    pastPos[1] = pos[1];
-    pastPos[2] = pos[2];
-
-    // Corrección direcciones
-    pos[1] = -pos[1];
-    pos[2] = -pos[2];
-    // Corrección relación engranajes
-    pos[1] = pos[1]*6/7;
-    pos[2] = pos[2]*11/18;
-    // Corrección origen
-    pos[0] += origin[0];
-    pos[1] += origin[1];
-    pos[2] += origin[2];
-
   nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
-  des_tcp[0] = curr_tcp.uno;
-  des_tcp[1] = curr_tcp.dos;
-  des_tcp[2] = curr_tcp.tres;
+  tcp[0] = curr_tcp.uno;
+  tcp[1] = curr_tcp.dos;
+  tcp[2] = curr_tcp.tres;
+
+  des_tcp[0] = tcp[0];
+  des_tcp[1] = tcp[1];
+  des_tcp[2] = tcp[2];
+  init_ctrl = 1;
 }
 
 void loop() {
@@ -142,9 +125,10 @@ void loop() {
 
   if(ctrl)
   {
+    setPastPos:
     // Lectura de los encoders (0, 1, 2)
     pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
-    pos[1] = (float) _enc->Read(1)*(360.0/4096.0);
+    pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
     pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
 
     // Corrección 360 grados
@@ -162,16 +146,21 @@ void loop() {
           pos[2] += 360;
     else if((pos[2] - pastPos[2]) > 180)
           pos[2] -= 360;
-
+    
     pastPos[0] = pos[0];
     pastPos[1] = pos[1];
     pastPos[2] = pos[2];
 
+    if(init_ctrl)
+    {
+      init_ctrl = 0;
+      goto setPastPos;
+    }
     // Corrección direcciones
     pos[1] = -pos[1];
     pos[2] = -pos[2];
     // Corrección relación engranajes
-    pos[1] = pos[1]*6/7;
+    //pos[1] = pos[1]*6/7;
     pos[2] = pos[2]*11/18;
     // Corrección origen
     pos[0] += origin[0];
@@ -183,96 +172,131 @@ void loop() {
     tcp[1] = curr_tcp.dos;
     tcp[2] = curr_tcp.tres;
 
-    int num_pasos_x = ceil(abs(des_tcp[0]-tcp[0])/10);
-    int num_pasos_y = ceil(abs(des_tcp[1]-tcp[1])/10);
-    int num_pasos_z = ceil(abs(des_tcp[2]-tcp[2])/10);
+    if(pastTcp[0] != des_tcp[0] || pastTcp[1] != des_tcp[1] || pastTcp[2] != des_tcp[2])
+    {
+      steps_x = tLineal_x(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_x);
+      steps_y = tLineal_y(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_y);
+      steps_z = tLineal_z(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_z);
+      // Motor 0
+      _pid[0]->reset(); 
+      p = 0;
+      // Motor 1
+      _pid[1]->reset(); 
+      q = 0;
+      // Motor 2
+      _pid[2]->reset();
+      t = 0;
+    }
     
-    int num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
-    num_pasosv2 = MAX(num_pasosv2, num_pasos_z);
+    pastTcp[0] = des_tcp[0];
+    pastTcp[1] = des_tcp[1];
+    pastTcp[2] = des_tcp[2];
 
-    steps = arrayTLinealv2(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2]);
+    
+    Serial.printf(">n_steps_x: %i\n", n_steps_x-1);
+    Serial.printf(">n_steps_y: %i\n", n_steps_y-1);
+    Serial.printf(">n_steps_z: %i\n", n_steps_z-1);
+    Serial.printf(">p: %i\n", p);
+    Serial.printf(">q: %i\n", q);
+    Serial.printf(">t: %i\n", t);
 
     // Motor 0
-    error_global[0] = abs(pos[0] - steps[0][num_pasosv2-1]);
-    desPos[0] = steps[0][p];
+    desPos[0] = steps_x[p];
+    
+    bool hasOvershot = false;
 
-    if(error_global[0] > tol_global && num_pasosv2 > 1)
-    {
-      error_local[0] = abs(pos[0] - steps[0][p]);
-      if(error_local[0] < tol_local)
+      if(steps_x[p] < steps_x[p+1]) {
+              // Moving in positive direction
+              if(pos[0] > steps_x[p+1]) {
+                  hasOvershot = true;
+              }
+          } else if(steps_x[p] > steps_x[p+1]) {
+              // Moving in negative direction
+              if(pos[0] < steps_x[p+1]) {
+                  hasOvershot = true;
+              }
+          }
+      
+      error_local[0] = abs(pos[0] - steps_x[p]);
+      if(error_local[0] < tol_local || hasOvershot)
       {
-        p++;
-        if(p > num_pasosv2)
-          p = num_pasosv2;
+          p++;
+          if(p == n_steps_x)
+          {
+            p = n_steps_x-1;
+            _pid[0]->reset();
+          }
       }
-      else
-      {
-        dutyCycle[0] = _pid[0]->calc(pos[0], steps[0][p]);
-        _m[0]->SetDuty(dutyCycle[0]);
-      }
-    }
-    else
-    {
-      _m[0]->SetDuty(0.05);
-      _pid[0]->reset();
-      p = 1;
-    }
+      
+      dutyCycle[0] = _pid[0]->calc(pos[0], steps_x[p]);
+      _m[0]->SetDuty(dutyCycle[0]);
 
     // Motor 1
-    error_global[1] = abs(pos[1] - steps[1][num_pasosv2-1]);
-    desPos[1] = steps[1][q];
+    desPos[1] = steps_y[q];
+    
+    hasOvershot = false;
 
-    if(error_global[1] > tol_global && num_pasosv2 > 1)
-    {
-      error_local[1] = abs(pos[1] - steps[1][q]);
-      if(error_local[1] < tol_local)
+      if(steps_y[q] < steps_y[q+1]) {
+              // Moving in positive direction
+              if(pos[1] > steps_y[q+1]) {
+                  hasOvershot = true;
+              }
+          } else if(steps_y[q] > steps_y[q+1]) {
+              // Moving in negative direction
+              if(pos[1] < steps_y[q+1]) {
+                  hasOvershot = true;
+              }
+          }
+      
+      error_local[1] = abs(pos[1] - steps_y[q]);
+      if(error_local[1] < tol_local || hasOvershot)
       {
-        q++;
-        if(q > num_pasosv2)
-          q = num_pasosv2;
+          q++;
+          if(q == n_steps_y)
+          {
+            q = n_steps_y-1;
+            _pid[1]->reset();
+          }
       }
-      else
-      {
-        dutyCycle[1] = _pid[1]->calc(pos[1], steps[1][q]);
-        _m[1]->SetDuty(dutyCycle[1]);
-      }
-    }
-    else
-    {
-      _m[1]->SetDuty(0.05);
-      _pid[1]->reset();
-      q = 1;
-    }
-
+      
+      dutyCycle[1] = _pid[1]->calc(pos[1], steps_y[q]);
+      _m[1]->SetDuty(dutyCycle[1]);
+            
     // Motor 2
-    error_global[2] = abs(pos[2] - steps[2][num_pasosv2-1]);
-    desPos[2] = steps[2][j];
+    desPos[2] = steps_z[t];
 
-    if(error_global[2] > tol_global && num_pasosv2 > 1)
-    {
-      error_local[2] = abs(pos[2] - steps[2][j]);
-      if(error_local[2] < tol_local)
+    hasOvershot = false;
+
+      if(steps_z[t] < steps_z[t+1]) {
+              // Moving in positive direction
+              if(pos[2] > steps_z[t+1]) {
+                  hasOvershot = true;
+              }
+          } else if(steps_z[t] > steps_z[t+1]) {
+              // Moving in negative direction
+              if(pos[2] < steps_z[t+1]) {
+                  hasOvershot = true;
+              }
+          }
+      
+      error_local[2] = abs(pos[2] - steps_z[t]);
+      if(error_local[2] < tol_local || hasOvershot)
       {
-        j++;
-        if(j > num_pasosv2)
-          j = num_pasosv2;
+          t++;
+          if(t == n_steps_z)
+          {
+            t = n_steps_z-1;
+            _pid[2]->reset();
+          }
       }
-      else
-      {
-        dutyCycle[2] = _pid[2]->calc(pos[2], steps[2][j]);
-        _m[2]->SetDuty(dutyCycle[2]);
-      }
-    }
-    else
-    {
-      _m[2]->SetDuty(0.05);
-      _pid[2]->reset();
-      j = 1;
-    }
+      
+      dutyCycle[2] = _pid[2]->calc(pos[2], steps_z[t]);
+      _m[2]->SetDuty(dutyCycle[2]);
+
 
     for(int i = 0; i < N_MOTORS; i++)
     {
-      if(i < 4)
+      if(i == 0 || i == 1 || i == 2)
       {
         Serial.printf(">pos[%i]: %f\n", i, pos[i]);
         Serial.printf(">desPos[%i]: %f\n", i, desPos[i]);
@@ -286,11 +310,6 @@ void loop() {
       }
     }
 
-    Serial.printf(">num_pasosv2: %i\n", num_pasosv2);
-    Serial.printf(">p: %i\n", p);
-    Serial.printf(">q: %i\n", q);
-    Serial.printf(">j: %i\n", j);
-
     Serial.printf(">tcp[x]: %f\n", tcp[0]);
     Serial.printf(">tcp[y]: %f\n", tcp[1]);
     Serial.printf(">tcp[z]: %f\n", tcp[2]);
@@ -298,119 +317,7 @@ void loop() {
     Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
     Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
 
-     /*Serial.printf(">pos[0]: %f\n", pos[0]);
-        Serial.printf(">pos[1]: %f\n", pos[1]);
-        Serial.printf(">pos[2]: %f\n", pos[2]);
-
-        
-
-        Serial.printf(">desPos[0]: %f\n", desPos[0]);
-        Serial.printf(">desPos[1]: %f\n", desPos[1]);
-        Serial.printf(">desPos[2]: %f\n", desPos[2]);
-
-        Serial.printf(">des_tcp[x]: %f\n", des_tcp[0]);
-        Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
-        Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
-
-        Serial.printf(">error_global[0]: %f\n", error_global[0]);
-        Serial.printf(">error_local[0]: %f\n", error_local[0]);
-        Serial.printf(">error[0]: %f\n", _pid[0]->_error);
-        Serial.printf(">P[0]:%f\n", _pid[0]->__P);
-        Serial.printf(">I[0]:%f\n", _pid[0]->_I);
-        Serial.printf(">D[0]:%f\n", _pid[0]->_D);
-        Serial.printf(">PID[0]:%f\n", _pid[0]->_PID);
-
-        Serial.printf(">p:%i\n", p);
-        Serial.printf(">num_pasosv2: %i\n", num_pasosv2);*/
-    /*desPos[i] = pasos[i][j];
-    desPos[i+1] = pasos[i+1][j];
-    desPos[i+2] = pasos[i+2][j];
-
-    if((pos[i] - pastPos[i]) < -180)
-          pos[i] += 360;
-    else if((pos[0] - pastPos[i]) > 180)
-          pos[i] -= 360;
-
-  
-
-    // Calculamos el error global
-    error_global[i] = abs(pos[i] - pasos[i][4]);
-
-    // Comprobamos si hemos llegado a la posición deseada final
-    if(error_global[i] > tol_global)
-    {
-      // Calculamos el error local
-      error_local[i] = abs(pos[i] - pasos[i][j]);
-
-      dutyCycle[i] = _pid[i]->calc(pos[i], desPos[i]);
-      _m[i]->SetDuty(dutyCycle[i]);
-
-      //if(error_local[i] < tol_local)
-      if(error_local[i] < tol_local && pos[i] < pasos[i][j+1])
-      {
-        // Cambiamos de paso
-        j++;
-        if(j > 4)
-          j = 4;
-
-        _pid[i]->reset();
-        Serial.printf("desPos[%i]: %f\n", i, desPos[i]);
-        Serial.printf("pasos[%i][%i]: %f\n", i, j, pasos[i][j]);
-      }
-    }
-    else
-    {
-      _m[i]->SetDuty(0.05);
-      _pid[i]->reset();
-    }
-
-    // Actualizamos la última posición
-    pastPos[i] = pos[i];*/
-
-    // DEBUG
-    /*Serial.printf(">x: %f\n", tcp[0]);
-    Serial.printf(">y: %f\n", tcp[1]);
-    Serial.printf(">z: %f\n", tcp[2]);
-
-    Serial.printf(">des_x: %f\n", des_tcp[0]);
-    Serial.printf(">des_y: %f\n", des_tcp[1]);
-    Serial.printf(">des_z: %f\n", des_tcp[2]);
-
-    Serial.printf(">pos[0]: %f\n", pos[0]);
-    Serial.printf(">desPos[0]: %f\n", desPos[0]);
-    Serial.printf(">error_global[0]: %f\n", error_global[0]);
-    Serial.printf(">error_local[0]: %f\n", error_local[0]);
-    Serial.printf(">error[0]: %f\n", _pid[0]->_error);
-    Serial.printf(">P[0]:%f\n", _pid[0]->__P);
-    Serial.printf(">I[0]:%f\n", _pid[0]->_I);
-    Serial.printf(">D[0]:%f\n", _pid[0]->_D);
-    Serial.printf(">PID[0]:%f\n", _pid[0]->_PID);
-
-    Serial.printf(">pos[1]: %f\n", pos[1]);
-    Serial.printf(">pos[2]: %f\n", pos[2]);
-
-    Serial.printf(">pos[1]: %f\n", pos[1]);
-    Serial.printf(">desPos[1]: %f\n", desPos[1]);
-    Serial.printf(">error_global[1]: %f\n", error_global[1]);
-    Serial.printf(">error_local[1]: %f\n", error_local[1]);
-    Serial.printf(">error[1]: %f\n", _pid[1]->_error);
-    Serial.printf(">P[1]:%f\n", _pid[1]->__P);
-    Serial.printf(">I[1]:%f\n", _pid[1]->_I);
-    Serial.printf(">D[1]:%f\n", _pid[1]->_D);
-    Serial.printf(">PID[1]:%f\n", _pid[1]->_PID);
-
-    Serial.printf(">pos[2]: %f\n", pos[2]);
-    Serial.printf(">desPos[2]: %f\n", desPos[2]);
-    Serial.printf(">error_global[2]: %f\n", error_global[2]);
-    Serial.printf(">error_local[2]: %f\n", error_local[2]);
-    Serial.printf(">error[2]: %f\n", _pid[2]->_error);
-    Serial.printf(">P[2]:%f\n", _pid[2]->__P);
-    Serial.printf(">I[2]:%f\n", _pid[2]->_I);
-    Serial.printf(">D[2]:%f\n", _pid[2]->_D);
-    Serial.printf(">PID[2]: %f\n", _pid[2]->_PID);*/
-
     ctrl = false;
-  }
 }
-
+}
   
