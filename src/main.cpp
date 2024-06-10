@@ -10,7 +10,7 @@ int MatrizEstado[SIZE][SIZE];
 // Declarar la función externa
 extern void Fn_MatrizState();
 
-void convertir_tablero(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
+void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             if (MatrizEstado[i][j] == 2)
@@ -123,7 +123,7 @@ void setup() {
     Fn_MatrizState();
 
     int MatrizEstadoNuevo[SIZE][SIZE];
-    convertir_tablero(MatrizEstado, MatrizEstadoNuevo);
+    convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
     int empate;
     int ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
