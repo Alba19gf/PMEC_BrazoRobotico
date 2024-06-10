@@ -255,7 +255,7 @@ void loop() {
           if(q == n_steps_y)
           {
             q = n_steps_y-1;
-            _pid[1]->reset();
+            //_pid[1]->reset();
           }
       }
       
