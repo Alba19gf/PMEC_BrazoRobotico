@@ -24,7 +24,6 @@ float* steps_y;
 int n_steps_y;
 float* steps_z;
 int n_steps_z;
-int num_pasosv2;
 
 int init_ctrl = 0;
 int init_pos = 0;
@@ -36,7 +35,102 @@ hw_timer_t *timer = NULL;
 int ctrl = false;
 void IRAM_ATTR timerCtrl() {
  ctrl = true;
- // Lectura de los encoders (0, 1, 2)
+}
+
+void setup() {
+   // Inicializamos el timer
+  timer = timerBegin(0, 80, true);                // Timer 0, clock divider 80
+  timerAttachInterrupt(timer, &timerCtrl, true);  // Attach the interrupt handling function
+  timerAlarmWrite(timer, 1000000*dt, true);       // Interrupt every 1 second
+  timerAlarmEnable(timer);                        // Enable the alarm
+
+  // Inicializamos el puerto serial
+  Serial.begin(115200);
+  // Inicializamos el puerto serial para los comandos
+  // Comando por defecto para comandos no reconocidos
+  cmd.SetDefaultHandler(cmd_unrecognized);
+  // Registramos los comandos para el puerto serial abierto
+  cmd.AddCommand(&cmd_set_debug_);
+  cmd.AddCommand(&cmd_set_led1_);
+  cmd.AddCommand(&cmd_set_led2_);
+  // Motores
+  cmd.AddCommand(&cmd_set_motor_pos_);
+  cmd.AddCommand(&cmd_set_encoder_zero_);
+  cmd.AddCommand(&cmd_set_motor_kp_);
+  cmd.AddCommand(&cmd_set_motor_ki_);
+  cmd.AddCommand(&cmd_set_motor_kd_);
+  cmd.AddCommand(&cmd_get_encoder_deg_);
+  cmd.AddCommand(&cmd_get_encoders_deg_);
+  cmd.AddCommand(&cmd_get_motor_info_);
+  // TCP
+  cmd.AddCommand(&cmd_set_tcp_);
+  cmd.AddCommand(&cmd_get_tcp_);
+  cmd.AddCommand(&cmd_goto_);
+
+  if(DEBUG & DEBUG_INFO != 0)
+    Serial.printf("Serial ready!\n");
+
+  if(DEBUG & DEBUG_EXTRA != 0)
+    Serial.printf("DEBUG MODE: %i\n", DEBUG);
+
+  // LEDS
+  pinMode(led_1, OUTPUT);
+  pinMode(led_2, OUTPUT);
+
+  analogWrite(led_1, 0);
+  analogWrite(led_2, 0);
+  
+  // Inicializamos los encoders
+  _enc = new AlMar::Esp32::EncoderATM203_Spi2(cs_pins,N_MOTORS,PIN_MOSI,PIN_MISO,PIN_SCLK);
+  
+  // Recorremos todos los motores existe en el array motor
+  for(int i = 0; i < N_MOTORS; i++)
+  {
+    // Inicializamos el motor
+    _m[i] = new AlMar::Esp32::Driver_L298n(motor[i][0], motor[i][1], motor[i][2], motor[i][3]);
+    _m[i]->begin();
+    // Inicializamos el control
+    _pid[i] = new PID(motor[i][4], motor[i][5], motor[i][6]);
+    _pid[i]->setdt(dt);
+    _pid[i]->setRange(motor[i][7], motor[i][8]);
+    _pid[i]->setWindup(motor[i][9]);
+
+    // Primera posición anterior para inicio fuera de origen
+    //pastPos[i] = (float) _enc->Read(i)*(360.0/4096.0);
+  }
+
+  // Calculamos la corrección del error de los encoders para la posición 5
+  nums temp = FnInvKinem(0, 330, -145);
+  origin[0] = temp.uno;
+  origin[1] = temp.dos;
+  origin[2] = temp.tres;
+
+  pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
+  pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
+  pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
+
+  nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
+  tcp[0] = curr_tcp.uno;
+  tcp[1] = curr_tcp.dos;
+  tcp[2] = curr_tcp.tres;
+
+  des_tcp[0] = tcp[0];
+  des_tcp[1] = tcp[1];
+  des_tcp[2] = tcp[2];
+
+  pastTcp[0] = des_tcp[0];
+  pastTcp[1] = des_tcp[1];
+  pastTcp[2] = des_tcp[2];
+  
+  init_ctrl = 1;
+}
+
+void loop() {
+  cmd.ReadSerial();
+
+  if(ctrl)
+  {
+    // Lectura de los encoders (0, 1, 2)
     pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
     pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
     pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
@@ -79,21 +173,9 @@ void IRAM_ATTR timerCtrl() {
 
     if(pastTcp[0] != des_tcp[0] || pastTcp[1] != des_tcp[1] || pastTcp[2] != des_tcp[2] || init_ctrl)
     {
-      struct nums angles1 = FnInvKinem(tcp[0], tcp[1], tcp[2]);
-      struct nums angles2 = FnInvKinem(des_tcp[0], des_tcp[1], des_tcp[2]);
-      int num_pasos_x = ceil(abs(angles1.uno - angles2.uno)/paso_x);
-      int num_pasos_y = ceil(abs(angles1.dos - angles2.dos)/paso_y);
-      int num_pasos_z = ceil(abs(angles1.tres - angles2.tres)/paso_z);
-
-      num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
-      num_pasosv2 = MAX(num_pasosv2, num_pasos_z);
-      n_steps_x = num_pasosv2;
-      n_steps_y = num_pasosv2;
-      n_steps_z = num_pasosv2;
-
-      steps_x = tLineal_x(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], num_pasosv2);
-      steps_y = tLineal_y(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], num_pasosv2);
-      steps_z = tLineal_z(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], num_pasosv2);
+      steps_x = tLineal_x(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_x);
+      steps_y = tLineal_y(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_y);
+      steps_z = tLineal_z(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], n_steps_z);
       // Motor 0
       _pid[0]->reset(); 
       p = 0;
@@ -109,8 +191,17 @@ void IRAM_ATTR timerCtrl() {
     pastTcp[1] = des_tcp[1];
     pastTcp[2] = des_tcp[2];
 
+    
+    Serial.printf(">n_steps_x: %i\n", n_steps_x-1);
+    Serial.printf(">n_steps_y: %i\n", n_steps_y-1);
+    Serial.printf(">n_steps_z: %i\n", n_steps_z-1);
+    Serial.printf(">p: %i\n", p);
+    Serial.printf(">q: %i\n", q);
+    Serial.printf(">t: %i\n", t);
+
     // Motor 0
     desPos[0] = steps_x[p];
+    
     bool hasOvershot = false;
 
       if(steps_x[p] < steps_x[p+1]) {
@@ -200,113 +291,6 @@ void IRAM_ATTR timerCtrl() {
       
       dutyCycle[2] = _pid[2]->calc(pos[2], steps_z[t]);
       _m[2]->SetDuty(dutyCycle[2]);
-}
-
-void setup() {
-   // Inicializamos el timer
-  timer = timerBegin(0, 80, true);                // Timer 0, clock divider 80
-  timerAttachInterrupt(timer, &timerCtrl, true);  // Attach the interrupt handling function
-  timerAlarmWrite(timer, 1000000*dt, true);       // Interrupt every 1 second
-  timerAlarmEnable(timer);                        // Enable the alarm
-
-  // Inicializamos el puerto serial
-  Serial.begin(115200);
-  // Inicializamos el puerto serial para los comandos
-  // Comando por defecto para comandos no reconocidos
-  cmd.SetDefaultHandler(cmd_unrecognized);
-  // Registramos los comandos para el puerto serial abierto
-  cmd.AddCommand(&cmd_set_debug_);
-  cmd.AddCommand(&cmd_set_led1_);
-  cmd.AddCommand(&cmd_set_led2_);
-  // Motores
-  cmd.AddCommand(&cmd_set_motor_pos_);
-  cmd.AddCommand(&cmd_set_encoder_zero_);
-  cmd.AddCommand(&cmd_set_motor_kp_);
-  cmd.AddCommand(&cmd_set_motor_ki_);
-  cmd.AddCommand(&cmd_set_motor_kd_);
-  cmd.AddCommand(&cmd_get_encoder_deg_);
-  cmd.AddCommand(&cmd_get_encoders_deg_);
-  cmd.AddCommand(&cmd_get_motor_info_);
-  // TCP
-  cmd.AddCommand(&cmd_set_tcp_);
-  cmd.AddCommand(&cmd_get_tcp_);
-  cmd.AddCommand(&cmd_goto_);
-  cmd.AddCommand(&cmd_goZ_);
-  cmd.AddCommand(&cmd_goSafe_);
-  // Gripper
-  cmd.AddCommand(&cmd_openGripper_);
-  cmd.AddCommand(&cmd_closeGripper_);
-
-  motorPinza.attach(MOTOR_PINZA_PIN);
-
-  if(DEBUG & DEBUG_INFO != 0)
-    Serial.printf("Serial ready!\n");
-
-  if(DEBUG & DEBUG_EXTRA != 0)
-    Serial.printf("DEBUG MODE: %i\n", DEBUG);
-
-  // LEDS
-  pinMode(led_1, OUTPUT);
-  pinMode(led_2, OUTPUT);
-
-  analogWrite(led_1, 0);
-  analogWrite(led_2, 0);
-  
-  // Inicializamos los encoders
-  _enc = new AlMar::Esp32::EncoderATM203_Spi2(cs_pins,N_MOTORS,PIN_MOSI,PIN_MISO,PIN_SCLK);
-  
-  // Recorremos todos los motores existe en el array motor
-  for(int i = 0; i < N_MOTORS; i++)
-  {
-    // Inicializamos el motor
-    _m[i] = new AlMar::Esp32::Driver_L298n(motor[i][0], motor[i][1], motor[i][2], motor[i][3]);
-    _m[i]->begin();
-    // Inicializamos el control
-    _pid[i] = new PID(motor[i][4], motor[i][5], motor[i][6]);
-    _pid[i]->setdt(dt);
-    _pid[i]->setRange(motor[i][7], motor[i][8]);
-    _pid[i]->setWindup(motor[i][9]);
-
-    // Primera posición anterior para inicio fuera de origen
-    //pastPos[i] = (float) _enc->Read(i)*(360.0/4096.0);
-  }
-
-  // Calculamos la corrección del error de los encoders para la posición 5
-  nums temp = FnInvKinem(0, 330, -145);
-  origin[0] = temp.uno;
-  origin[1] = temp.dos;
-  origin[2] = temp.tres;
-
-  pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
-  pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
-  pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
-
-  nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
-  tcp[0] = curr_tcp.uno;
-  tcp[1] = curr_tcp.dos;
-  tcp[2] = curr_tcp.tres;
-
-  des_tcp[0] = tcp[0];
-  des_tcp[1] = tcp[1];
-  des_tcp[2] = tcp[2];
-
-  pastTcp[0] = des_tcp[0];
-  pastTcp[1] = des_tcp[1];
-  pastTcp[2] = des_tcp[2];
-  
-  init_ctrl = 1;
-}
-
-void loop() {
-  cmd.ReadSerial();
-
-  
-    Serial.printf(">n_steps_x: %i\n", n_steps_x-1);
-    Serial.printf(">n_steps_y: %i\n", n_steps_y-1);
-    Serial.printf(">n_steps_z: %i\n", n_steps_z-1);
-    Serial.printf(">p: %i\n", p);
-    Serial.printf(">q: %i\n", q);
-    Serial.printf(">t: %i\n", t);
 
 
     for(int i = 0; i < N_MOTORS; i++)
@@ -332,10 +316,7 @@ void loop() {
     Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
     Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
 
-  while(ctrl)
-  {
-    Serial.printf("Control\n");
     ctrl = false;
-  }
+}
 }
   

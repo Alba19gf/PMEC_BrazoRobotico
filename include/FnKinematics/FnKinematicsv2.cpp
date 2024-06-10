@@ -22,16 +22,26 @@ float paso_x = 2.5;
 float paso_y = 2.5;
 float paso_z = 2.5;
 
-float* tLineal_x(float x1, float y1, float z1, float x2, float y2, float z2, int& n_steps) {
+float* tLineal_x(float x1, float y1, float z1, float x2, float y2, float z2, int n_steps) {
     struct nums angles1 = FnInvKinem(x1, y1, z1);
     struct nums angles2 = FnInvKinem(x2, y2, z2);
+    int num_pasos_x;
 
     //Serial.printf("ángulos x1[%f]: %f, ángulos x2[%f]: %f\n", x1, angles1.uno, x2, angles2.uno);
 
-    int num_pasos_x = ceil(abs(angles1.uno - angles2.uno)/paso_x);
+    num_pasos_x = ceil(abs(angles1.uno - angles2.uno)/paso_x);
 
     if (num_pasos_x == 0) {
         num_pasos_x = 1;
+    }
+
+    if(n_steps > 0)
+    {
+        num_pasos_x = n_steps;
+    }
+    else
+    {
+        n_steps = num_pasos_x;
     }
 
     float* angulos = new float[num_pasos_x];
@@ -42,11 +52,10 @@ float* tLineal_x(float x1, float y1, float z1, float x2, float y2, float z2, int
         angulos[i] = num_pasos_x == 1 ? angles1.uno : angles1.uno + (angles2.uno - angles1.uno) * i / (num_pasos_x - 1);
         //Serial.printf("Angulos[x][%i]: %f\n", i, angulos[i]);
     }
-    n_steps = num_pasos_x;
     return angulos;
 }
 
-float* tLineal_y(float x1, float y1, float z1, float x2, float y2, float z2, int& n_steps) {
+float* tLineal_y(float x1, float y1, float z1, float x2, float y2, float z2, int n_steps) {
     struct nums angles1 = FnInvKinem(x1, y1, z1);
     struct nums angles2 = FnInvKinem(x2, y2, z2);
 
@@ -58,6 +67,16 @@ float* tLineal_y(float x1, float y1, float z1, float x2, float y2, float z2, int
         num_pasos_y = 1;
     }
 
+    if(n_steps > 0)
+    {
+        num_pasos_y = n_steps;
+    }
+    else
+    {
+        n_steps = num_pasos_y;
+    }
+
+
     float* angulos = new float[num_pasos_y];
     
     float y_pasos[(int)num_pasos_y];
@@ -66,20 +85,30 @@ float* tLineal_y(float x1, float y1, float z1, float x2, float y2, float z2, int
         angulos[i] = num_pasos_y == 1 ? angles1.dos : angles1.dos + (angles2.dos - angles1.dos) * i / (num_pasos_y - 1);
         //Serial.printf("Angulos[y][%i]: %f\n", i, angulos[i]);
     }
-    n_steps = num_pasos_y;
     return angulos;
 }
 
-float *tLineal_z(float x1, float y1, float z1, float x2, float y2, float z2, int& n_steps) {
+float *tLineal_z(float x1, float y1, float z1, float x2, float y2, float z2, int n_steps) {
     struct nums angles1 = FnInvKinem(x1, y1, z1);
     struct nums angles2 = FnInvKinem(x2, y2, z2);
+    int num_pasos_z;
 
     //Serial.printf("ángulos z1[%f]: %f, ángulos z2[%f]: %f\n", z1, angles1.tres, z2, angles2.tres);
 
-    int num_pasos_z = ceil(abs(angles1.tres - angles2.tres)/paso_z);
+    
+    num_pasos_z = ceil(abs(angles1.tres - angles2.tres)/paso_z);
 
     if (num_pasos_z == 0) {
         num_pasos_z = 1;
+    }
+
+    if(n_steps > 0)
+    {
+        num_pasos_z = n_steps;
+    }
+    else
+    {
+        n_steps = num_pasos_z;
     }
 
     float* angulos = new float[num_pasos_z];
@@ -90,7 +119,6 @@ float *tLineal_z(float x1, float y1, float z1, float x2, float y2, float z2, int
         angulos[i] = num_pasos_z == 1 ? angles1.tres : angles1.tres + (angles2.tres - angles1.tres) * i / (num_pasos_z - 1);
         //Serial.printf("Angulos[z][%i]: %f\n", i, angulos[i]);
     }
-    n_steps = num_pasos_z;
     return angulos;
 }
 
@@ -122,7 +150,7 @@ float** arrayTLinealv2(float x_inicio, float y_inicio, float z_inicio, float x_f
         angulos[0][i] = num_pasosv2 == 1 ? angles_inicio.uno : angles_inicio.uno + (angles_final.uno - angles_inicio.uno) * i / (num_pasosv2 - 1);
         angulos[0][i] = num_pasosv2 == 1 ? angles_inicio.dos : angles_inicio.dos + (angles_final.dos - angles_inicio.dos) * i / (num_pasosv2 - 1);
         angulos[0][i] = num_pasosv2 == 1 ? angles_inicio.tres : angles_inicio.tres + (angles_final.tres - angles_inicio.tres) * i / (num_pasosv2 - 1);
-        Serial.printf("Angulos[0][%i]: %f\n", i, angulos[0][i]);
+        //Serial.printf("Angulos[0][%i]: %f\n", i, angulos[0][i]);
     }
     return angulos;
 }

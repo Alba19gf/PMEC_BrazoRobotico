@@ -1,0 +1,214 @@
+{
+   "widgets": [
+      {
+         "type": "chart",
+         "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 0
+         },
+         "series": [
+            {
+               "name": "tcp[x]",
+               "sourceNames": [
+                  "tcp[x]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "tcp[x]",
+                  "stroke": "rgba(231,76,60,1)",
+                  "fill": "rgba(231,76,60,0.1)"
+               },
+               "type": "number"
+            },
+            {
+               "name": "des_tcp[x]",
+               "sourceNames": [
+                  "des_tcp[x]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "des_tcp[x]",
+                  "stroke": "rgba(52,152,219,1)",
+                  "fill": "rgba(52,152,219,0.1)"
+               },
+               "type": "number"
+            }
+         ]
+      },
+      {
+         "type": "chart",
+         "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 0
+         },
+         "series": [
+            {
+               "name": "tcp[y]",
+               "sourceNames": [
+                  "tcp[y]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "tcp[y]",
+                  "stroke": "rgba(231,76,60,1)",
+                  "fill": "rgba(231,76,60,0.1)"
+               },
+               "type": "number"
+            },
+            {
+               "name": "des_tcp[y]",
+               "sourceNames": [
+                  "des_tcp[y]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "des_tcp[y]",
+                  "stroke": "rgba(52,152,219,1)",
+                  "fill": "rgba(52,152,219,0.1)"
+               },
+               "type": "number"
+            }
+         ]
+      },
+      {
+         "type": "chart",
+         "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 0
+         },
+         "series": [
+            {
+               "name": "tcp[z]",
+               "sourceNames": [
+                  "tcp[z]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "tcp[z]",
+                  "stroke": "rgba(231,76,60,1)",
+                  "fill": "rgba(231,76,60,0.1)"
+               },
+               "type": "number"
+            },
+            {
+               "name": "des_tcp[z]",
+               "sourceNames": [
+                  "des_tcp[z]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "des_tcp[z]",
+                  "stroke": "rgba(52,152,219,1)",
+                  "fill": "rgba(52,152,219,0.1)"
+               },
+               "type": "number"
+            }
+         ]
+      },
+      {
+         "type": "chart",
+         "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 0
+         },
+         "series": [
+            {
+               "name": "PID[0]",
+               "sourceNames": [
+                  "PID[0]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "PID[0]",
+                  "stroke": "rgba(231,76,60,1)",
+                  "fill": "rgba(231,76,60,0.1)"
+               },
+               "type": "number"
+            },
+            {
+               "name": "I[0]",
+               "sourceNames": [
+                  "I[0]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "I[0]",
+                  "stroke": "rgba(52,152,219,1)",
+                  "fill": "rgba(52,152,219,0.1)"
+               },
+               "type": "number"
+            },
+            {
+               "name": "P[0]",
+               "sourceNames": [
+                  "P[0]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "P[0]",
+                  "stroke": "rgba(46,204,113,1)",
+                  "fill": "rgba(46,204,113,0.1)"
+               },
+               "type": "number"
+            }
+         ]
+      },
+      {
+         "type": "chart",
+         "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 0
+         },
+         "series": [
+            {
+               "name": "PID[1]",
+               "sourceNames": [
+                  "PID[1]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "PID[1]",
+                  "stroke": "rgba(231,76,60,1)",
+                  "fill": "rgba(231,76,60,0.1)"
+               },
+               "type": "number"
+            }
+         ]
+      },
+      {
+         "type": "chart",
+         "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 0
+         },
+         "series": [
+            {
+               "name": "PID[2]",
+               "sourceNames": [
+                  "PID[2]"
+               ],
+               "formula": "",
+               "options": {
+                  "_serie": "PID[2]",
+                  "stroke": "rgba(231,76,60,1)",
+                  "fill": "rgba(231,76,60,0.1)"
+               },
+               "type": "number"
+            }
+         ]
+      }
+   ],
+   "viewDuration": 15
+}
