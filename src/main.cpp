@@ -300,7 +300,8 @@ void setup() {
 void loop() {
   cmd.ReadSerial();
 
-  
+  if(ctrl)
+  {
     Serial.printf(">n_steps_x: %i\n", n_steps_x-1);
     Serial.printf(">n_steps_y: %i\n", n_steps_y-1);
     Serial.printf(">n_steps_z: %i\n", n_steps_z-1);
@@ -332,10 +333,7 @@ void loop() {
     Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
     Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
 
-  while(ctrl)
-  {
-    Serial.printf("Control\n");
     ctrl = false;
-  }
+}
 }
   
