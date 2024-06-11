@@ -118,3 +118,25 @@ void mov_optimo(int MatrizEstado[SIZE][SIZE], int* pos_optima, int* resultado) {
     *pos_optima = mejor_casilla;
 }
 
+void ejecutarJuego() {
+    // Llamar a la función externa para actualizar MatrizEstado
+    int MatrizEstado[SIZE][SIZE];
+    Fn_MatrizState(MatrizEstado);
+
+    // Convertir MatrizEstado a MatrizEstadoNuevo
+    int MatrizEstadoNuevo[SIZE][SIZE];
+    convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
+
+    // Obtener la posición óptima
+    int pos_optima = mov_optimo(MatrizEstadoNuevo);
+
+    // Comprobar el resultado y asignar el valor adecuado
+    int resultado = comprueba_ganador(MatrizEstadoNuevo);
+    if (resultado == 1) {
+        resultado = 13; // Empate
+    } else if (resultado == 12) {
+        // El robot ha ganado
+    } else if (resultado == 11) {
+        // El humano ha ganado
+    }
+}
