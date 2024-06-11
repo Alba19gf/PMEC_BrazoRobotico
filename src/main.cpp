@@ -20,7 +20,7 @@ extern void Fn_MatrizState();
 // void Fn_MatrizState() {
 //     // Actualiza MatrizEstado con un estado de prueba
 //     int estado_prueba[SIZE][SIZE] = {
-//         {-1, 2, -1},
+//         {0, 2, 0},
 //         {2, 1, 2},
 //         {2, 1, 2}
 //     };
