@@ -117,7 +117,6 @@ void mov_optimo(int MatrizEstado[SIZE][SIZE], int* pos_optima, int* resultado) {
 
     *pos_optima = mejor_casilla;
 }
-
 void ejecutarJuego() {
     // Llamar a la función externa para actualizar MatrizEstado
     int MatrizEstado[SIZE][SIZE];
@@ -128,15 +127,17 @@ void ejecutarJuego() {
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
     // Obtener la posición óptima
-    int pos_optima = mov_optimo(MatrizEstadoNuevo);
+    int pos_optima, resultado;
+    mov_optimo(MatrizEstado, &pos_optima, &resultado);
 
     // Comprobar el resultado y asignar el valor adecuado
-    int resultado = comprueba_ganador(MatrizEstadoNuevo);
-    if (resultado == 1) {
-        resultado = 13; // Empate
+    if (resultado == 0) {
+        Serial.println("Empate.");
+    } else if (resultado == 1) {
+        Serial.println("El humano ha ganado.");
     } else if (resultado == 12) {
-        // El robot ha ganado
-    } else if (resultado == 11) {
-        // El humano ha ganado
+        Serial.println("El robot ha ganado.");
     }
+    Serial.print("Posición óptima: ");
+    Serial.println(pos_optima);
 }
