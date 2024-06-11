@@ -1,47 +1,13 @@
 #include "TresEnRaya.h"
 
-TresEnRaya::TresEnRaya() {
-    SIZE = 3;
-    MatrizEstado = new int*[SIZE];
-    for (int i = 0; i < SIZE; ++i) {
-        MatrizEstado[i] = new int[SIZE];
-    }
+TresEnRaya::TresEnRaya() {}
+
+void TresEnRaya::Fn_MatrizState() {
+    // Aquí se debe actualizar la matrizEstado desde la fuente externa
+    // Ejemplo: MatrizEstado = actualizar_matriz(); // 
 }
 
-void TresEnRaya::inicializar() {
-    // Llamar a la función externa para actualizar MatrizEstado
-    Fn_MatrizState();
-
-    // Convertir MatrizEstado a MatrizEstadoNuevo
-    int MatrizEstadoNuevo[SIZE][SIZE];
-    convertirMatriz(MatrizEstado, MatrizEstadoNuevo);
-
-    // Obtener el resultado
-    resultado = 0;
-    int ganador = compruebaGanador(MatrizEstadoNuevo, &resultado);
-    if (ganador == 1) {
-        resultado = 12; // El robot ha ganado
-    } else if (ganador == -1) {
-        resultado = 11; // El humano ha ganado
-    } else if (resultado == 1) {
-        resultado = 13; // Empate
-    }
-}
-
-int TresEnRaya::obtenerPosicionOptima() {
-    // Convertir MatrizEstado a MatrizEstadoNuevo
-    int MatrizEstadoNuevo[SIZE][SIZE];
-    convertirMatriz(MatrizEstado, MatrizEstadoNuevo);
-
-    // Obtener la posición óptima
-    return movOptimo(MatrizEstadoNuevo);
-}
-
-int TresEnRaya::obtenerResultado() {
-    return resultado;
-}
-
-void TresEnRaya::convertirMatriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
+void TresEnRaya::convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             if (MatrizEstado[i][j] == 2)
@@ -54,7 +20,7 @@ void TresEnRaya::convertirMatriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoN
     }
 }
 
-int TresEnRaya::compruebaGanador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
+int TresEnRaya::comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
     int combinaciones[8][3][2] = {
         {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
         {{0, 0}, {1, 0}, {2, 0}}, {{0, 1}, {1, 1}, {2, 1}}, {{0, 2}, {1, 2}, {2, 2}}, // Combinaciones para columnas
@@ -82,11 +48,13 @@ int TresEnRaya::compruebaGanador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate)
     }
 
     return 0;  // Si no hay ganador y no hay espacios vacíos, es empate
+    // Si el robot ha ganado 1
+    // Si el humano ha ganado -1
 }
 
 int TresEnRaya::minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) {
     int empate;
-    int ganador = compruebaGanador(MatrizEstadoNuevo, &empate);
+    int ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
 
     if (ganador != 0) {
         return (ganador == 1 ? 100 - prof : -100 + prof);
@@ -113,7 +81,6 @@ int TresEnRaya::minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) 
         int mejorPuntuacion = INT_MAX;
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-                if (MatrizEstadoNuevo[i][j] == 0)
                 if (MatrizEstadoNuevo[i][j] == 0) {
                     MatrizEstadoNuevo[i][j] = -1;
                     int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, 1);
@@ -128,7 +95,10 @@ int TresEnRaya::minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) 
     }
 }
 
-int TresEnRaya::movOptimo(int MatrizEstadoNuevo[SIZE][SIZE]) {
+int TresEnRaya::mov_optimo() {
+    int MatrizEstadoNuevo[SIZE][SIZE];
+    convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
+
     int mejor_puntuacion = INT_MIN;
     int mejor_casilla = -1;
 
@@ -141,51 +111,11 @@ int TresEnRaya::movOptimo(int MatrizEstadoNuevo[SIZE][SIZE]) {
 
                 if (puntuacion > mejor_puntuacion) {
                     mejor_puntuacion = puntuacion;
-                    mejor_casilla = i * SIZE + j; // Calcular la posición única
+                    mejor_casilla = i * SIZE + j; // Calcular la posición óptima
                 }
             }
         }
     }
 
     return mejor_casilla;
-}
-
-// void Fn_MatrizState() {
-//     // Actualiza MatrizEstado con un estado de prueba
-//     int estado_prueba[SIZE][SIZE] = {
-//         {0, 2, 0},
-//         {2, 1, 2},
-//         {2, 1, 2}
-//     };
-//     memcpy(MatrizEstado, estado_prueba, sizeof(estado_prueba));
-// }
-
-void setup() {
-    // Inicializar comunicación serial
-    Serial.begin(115200);
-
-    // Llamar a la función externa para actualizar MatrizEstado
-    Fn_MatrizState();
-
-    // Crear objeto de la clase TresEnRaya
-    TresEnRaya juego;
-
-    // Inicializar el juego
-    juego.inicializar();
-
-    // Obtener la posición óptima
-    int pos_optima = juego.obtenerPosicionOptima();
-
-    // Obtener el resultado del juego
-    int resultado = juego.obtenerResultado();
-
-    // Enviar resultados a través de Serial
-    Serial.print("Posición óptima: ");
-    Serial.println(pos_optima);
-    Serial.print("Resultado: ");
-    Serial.println(resultado);
-}
-
-void loop() {
-    // Nothing to loop here
 }
