@@ -120,28 +120,28 @@ int TresEnRaya::mov_optimo() {
     return mejor_casilla;
 }
 
-// void TresEnRaya::ejecutarJuego() {
-//     // Convertir MatrizEstado a MatrizEstadoNuevo
-//     int MatrizEstadoNuevo[SIZE][SIZE];
-//     convertirMatriz(MatrizEstado, MatrizEstadoNuevo);
+void TresEnRaya::ejecutarJuego() {
+    // Convertir MatrizEstado a MatrizEstadoNuevo
+    int MatrizEstadoNuevo[SIZE][SIZE];
+    convertirMatriz(MatrizEstado, MatrizEstadoNuevo);
 
-//     // Obtener la posición óptima
-//     int posOptima = movOptimo(MatrizEstadoNuevo);
+    // Obtener la posición óptima
+    int posOptima = movOptimo(MatrizEstadoNuevo);
 
-//     // Comprobar el resultado y asignar el valor adecuado
-//     int resultado = 0;
-//     int ganador = compruebaGanador(MatrizEstadoNuevo, &resultado);
-//     if (ganador == 1) {
-//         resultado = 12; // El robot ha ganado
-//     } else if (ganador == -1) {
-//         resultado = 11; // El humano ha ganado
-//     } else if (resultado == 1) {
-//         resultado = 13; // Empate
-//     }
+    // Comprobar el resultado y asignar el valor adecuado
+    int resultado = 0;
+    int ganador = compruebaGanador(MatrizEstadoNuevo, &resultado);
+    if (ganador == 1) {
+        resultado = 12; // El robot ha ganado
+    } else if (ganador == -1) {
+        resultado = 11; // El humano ha ganado
+    } else if (resultado == 1) {
+        resultado = 13; // Empate
+    }
 
-//     // Enviar resultados a través de Serial
-//     Serial.print("Posición óptima: ");
-//     Serial.println(posOptima);
-//     Serial.print("Resultado: ");
-//     Serial.println(resultado);
-// }
+    // Enviar resultados a través de Serial
+    Serial.print("Posición óptima: ");
+    Serial.println(posOptima);
+    Serial.print("Resultado: ");
+    Serial.println(resultado);
+}
