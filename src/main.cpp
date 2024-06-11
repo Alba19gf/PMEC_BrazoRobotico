@@ -5,6 +5,8 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h>  // Para INT_MIN y INT_MAX
+#include "../lib/Comunicacion_JSON.cpp"
+#include "../lib/Comunicacion_JSON.h"
 
 #define SIZE 3 // Definir tablero de 3x3 
 
