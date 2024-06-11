@@ -15,17 +15,6 @@ int MatrizEstado[SIZE][SIZE];
 // Declarar la función externa para recibir la matriz de visión
 extern void Fn_MatrizState();
 
-// // Función para actualizar la matriz de prueba 
-// void Fn_MatrizState() {
-//     // Actualiza MatrizEstado con un estado de prueba
-//     int estado_prueba[SIZE][SIZE] = {
-//         {0, 2, 0},
-//         {2, 1, 2},
-//         {2, 1, 2}
-//     };
-//     memcpy(MatrizEstado, estado_prueba, sizeof(estado_prueba));
-// }
-
 void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
