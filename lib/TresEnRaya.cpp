@@ -108,7 +108,6 @@ int mov_optimo(int MatrizEstado[SIZE][SIZE]) {
     return mejor_casilla;
 }
 
-#include "TresEnRaya.h"
 
 int PosicionOptima() {
     // Llamar a la función externa para actualizar MatrizEstado
