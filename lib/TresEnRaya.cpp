@@ -113,7 +113,7 @@ int TresEnRaya::minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) 
         int mejorPuntuacion = INT_MAX;
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
-                if (MatrizEstadoNuevo[i][j] == 0
+                if (MatrizEstadoNuevo[i][j] == 0)
                 if (MatrizEstadoNuevo[i][j] == 0) {
                     MatrizEstadoNuevo[i][j] = -1;
                     int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, 1);
@@ -150,15 +150,15 @@ int TresEnRaya::movOptimo(int MatrizEstadoNuevo[SIZE][SIZE]) {
     return mejor_casilla;
 }
 
-void Fn_MatrizState() {
-    // Actualiza MatrizEstado con un estado de prueba
-    int estado_prueba[SIZE][SIZE] = {
-        {0, 2, 0},
-        {2, 1, 2},
-        {2, 1, 2}
-    };
-    memcpy(MatrizEstado, estado_prueba, sizeof(estado_prueba));
-}
+// void Fn_MatrizState() {
+//     // Actualiza MatrizEstado con un estado de prueba
+//     int estado_prueba[SIZE][SIZE] = {
+//         {0, 2, 0},
+//         {2, 1, 2},
+//         {2, 1, 2}
+//     };
+//     memcpy(MatrizEstado, estado_prueba, sizeof(estado_prueba));
+// }
 
 void setup() {
     // Inicializar comunicación serial
