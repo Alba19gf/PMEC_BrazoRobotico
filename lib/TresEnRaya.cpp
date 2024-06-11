@@ -119,3 +119,17 @@ int TresEnRaya::mov_optimo() {
 
     return mejor_casilla;
 }
+
+// int TresEnRaya::obtener_resultado() {
+//     int resultado = 0;
+//     int empate;
+//     int ganador = comprueba_ganador(MatrizEstado, &empate);
+//     if (ganador == 1) {
+//         resultado = 12; // El robot ha ganado
+//     } else if (ganador == -1) {
+//         resultado = 11; // El humano ha ganado
+//     } else if (empate) {
+//         resultado = 13; // Empate
+//     }
+//     return resultado;
+// }
