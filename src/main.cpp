@@ -103,6 +103,9 @@ void IRAM_ATTR timerCtrl() {
       // Motor 2
       _pid[2]->reset();
       t = 0;
+
+      
+    end_ctrl = 0;
     }
     
     pastTcp[0] = des_tcp[0];
@@ -200,6 +203,16 @@ void IRAM_ATTR timerCtrl() {
       
       dutyCycle[2] = _pid[2]->calc(pos[2], steps_z[t]);
       _m[2]->SetDuty(dutyCycle[2]);
+
+      if(counter == 6)
+      {
+        counter = 0;
+      }
+      else
+      {
+        counter++;
+      }
+      
 }
 
 void setup() {
@@ -233,17 +246,14 @@ void setup() {
   cmd.AddCommand(&cmd_goto_);
   cmd.AddCommand(&cmd_goZ_);
   cmd.AddCommand(&cmd_goSafe_);
+  cmd.AddCommand(&cmd_goHome_);
   // Gripper
   cmd.AddCommand(&cmd_openGripper_);
   cmd.AddCommand(&cmd_closeGripper_);
 
+  cmd.AddCommand(&cmd_moverPieza_);
+
   motorPinza.attach(MOTOR_PINZA_PIN);
-
-  if(DEBUG & DEBUG_INFO != 0)
-    Serial.printf("Serial ready!\n");
-
-  if(DEBUG & DEBUG_EXTRA != 0)
-    Serial.printf("DEBUG MODE: %i\n", DEBUG);
 
   // LEDS
   pinMode(led_1, OUTPUT);
@@ -299,9 +309,11 @@ void setup() {
 
 void loop() {
   cmd.ReadSerial();
-
+  
   if(ctrl)
   {
+    
+    Serial.printf(">estado: %i\n", estado);
     Serial.printf(">n_steps_x: %i\n", n_steps_x-1);
     Serial.printf(">n_steps_y: %i\n", n_steps_y-1);
     Serial.printf(">n_steps_z: %i\n", n_steps_z-1);
@@ -333,7 +345,24 @@ void loop() {
     Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
     Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
 
+    /*while(p > 0)
+    {
+      end_ctrl = false;
+    }
+    end_ctrl = true;*/
+
+    if(p == n_steps_x-1 && q == n_steps_y-1 && t == n_steps_z-1)
+    {
+      end_ctrl = 1;
+    }
+
+    Serial.printf(">end_ctrl: %i\n", end_ctrl);
     ctrl = false;
-}
+    moverPieza(ficha, posicion);
+    Serial.printf(">ficha: %i\n", ficha);
+    Serial.printf(">posicion: %i\n", posicion);
+  }
+
+
 }
   

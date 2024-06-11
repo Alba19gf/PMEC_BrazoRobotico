@@ -141,30 +141,6 @@ float PID::calc(float currentValue, float desiredValue)
 
     _pre_error = _error;
 
-    if(DEBUG & DEBUG_PID != 0)
-    {
-        if(DEBUG & DEBUG_PLOT != 0)
-        {
-            /*Serial.printf(">desPos: %f\n", desiredValue);
-            Serial.printf(">currPos: %f\n", currentValue);
-            Serial.printf(">error: %f\n", error);
-            
-            Serial.printf(">Error: %f\n", error);
-            Serial.printf(">_pre_error: %f\n", _pre_error);
-            Serial.printf(">sum_error: %f\n", _sum_error);
-            Serial.printf(">PID: %f\n", PID);
-            Serial.printf(">P: %f\n", P);
-            Serial.printf(">I: %f\n", I);
-            Serial.printf(">D: %f\n", D);*/
-        }
-
-        if(DEBUG & DEBUG_INFO != 0)
-        {
-            //Serial.printf("PID: %f, P: %f, I: %f, D:%f \n", PID, P, I, D);
-            //Serial.printf("desPos: %f, currPos: %f, error: %f, _pre_error: %f\n", desiredValue, currentValue, error, _pre_error);
-        }
-    }
-
     return _PID;
 }
 

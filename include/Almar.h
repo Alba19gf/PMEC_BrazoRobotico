@@ -54,8 +54,11 @@ const int N_MOTORS = sizeof(motor)/sizeof(motor[0]);
 int cs_pins[]={PIN_CS_M1, PIN_CS_M2, PIN_CS_M3};
 int pwm_freq = 25000;
 
-// Kinematics
-float** TCP_d;
+int counter = 0;
+int end_ctrl = 0;
+int ficha = -1;
+int posicion = -1;
+int estado = 0;
 
 // CONTROL
 float dutyCycle[N_MOTORS] = {};
@@ -82,8 +85,10 @@ float c4[3] = {-40.0, 335.0, _goSafe};
 float c3[3] = {40.0,  305.0, _goSafe};
 float c2[3] = { 0.0,  305.0, _goSafe};
 float c1[3] = {-40.0, 305.0, _goSafe};
-float home[3] = {c1[0], c1[1], c1[2]};//;{0.0, 330.0, -100.0};
+float home[3] = {80, 260, -50};//;{0.0, 330.0, -100.0};
 
+float pos_piez_inis[10][3] = {{-75, 277.5, _goSafe}, {-40, 277.5, _goSafe}, {0, 277.5, _goSafe}, {40, 277.5, _goSafe}, {75, 277.5, _goSafe}, {-75, 400, _goSafe}, {-40, 400, _goSafe}, {0, 400, _goSafe}, {40, 400, _goSafe}, {75, 400, _goSafe}};
+int moving = 0;
 
 /*################# ##
 ## SERIAL COMMMANDS ##
@@ -139,12 +144,186 @@ void closeGripper()
   Serial.printf("Cerrar pinza\n");
 }
 
+void goHome()
+{
+  des_tcp[0] = home[0];
+  des_tcp[1] = home[1];
+  des_tcp[2] = home[2];
+  Serial.printf("Go Home\n");
+}
+
 void goTCP(float x, float y, float z)
 {
   des_tcp[0] = x;
   des_tcp[1] = y;
   des_tcp[2] = z;
-  Serial.printf("goTCP # x:%f, y:%f, z:%f\n", x, y, z);
+  //Serial.printf("goTCP # x:%f, y:%f, z:%f\n", x, y, z);
+}
+
+int moverPieza(int pos_pieza, int pos_tab_obj) {
+    float pos_final_obj[3] = {0, 0, 0};
+
+    if(pos_pieza == -1 || pos_tab_obj == -1)
+    {
+      //Serial.println("ERROR: No se ha especificado la ficha o la posición");
+      return 0;
+    }
+
+    
+    
+    switch (pos_tab_obj) {
+        case 1:
+            pos_final_obj[0] = c1[0];
+            pos_final_obj[1] = c1[1];
+            pos_final_obj[2] = c1[2];
+        break;
+        case 2:
+            pos_final_obj[0] = c2[0];
+            pos_final_obj[1] = c2[1];
+            pos_final_obj[2] = c2[2];
+        break;
+        case 3:
+            pos_final_obj[0] = c3[0];
+            pos_final_obj[1] = c3[1];
+            pos_final_obj[2] = c3[2];
+        break;
+        case 4:
+            pos_final_obj[0] = c4[0];
+            pos_final_obj[1] = c4[1];
+            pos_final_obj[2] = c4[2];
+        break;
+        case 5: 
+            pos_final_obj[0] = c5[0];
+            pos_final_obj[1] = c5[1];
+            pos_final_obj[2] = c5[2];
+        break;
+        case 6:
+            pos_final_obj[0] = c6[0];
+            pos_final_obj[1] = c6[1];
+            pos_final_obj[2] = c6[2];
+        break;
+        case 7:
+            pos_final_obj[0] = c7[0];
+            pos_final_obj[1] = c7[1];
+            pos_final_obj[2] = c7[2];
+        break;
+        case 8:
+            pos_final_obj[0] = c8[0];
+            pos_final_obj[1] = c8[1];
+            pos_final_obj[2] = c8[2];
+        break;
+        case 9: 
+            pos_final_obj[0] = c9[0];
+            pos_final_obj[1] = c9[1];
+            pos_final_obj[2] = c9[2];
+        break;
+    }
+    Serial.printf("Mover ficha %i a posición %i\n", pos_pieza, pos_tab_obj);
+    //Serial.printf("pos_final_obj: %f, %f, %f\n", pos_final_obj[0], pos_final_obj[1], pos_final_obj[2]);
+    Serial.printf("end_ctrl: %i\n", end_ctrl);
+    Serial.printf("estado: %i\n", estado);
+
+    // Se supone que se parte siempre de la posición de reposo del robot
+    if(end_ctrl == 1 && estado == 0) {
+      Serial.printf("Movimiento uno\n");
+      goTCP(pos_piez_inis[pos_pieza-1][0], pos_piez_inis[pos_pieza-1][1], pos_piez_inis[pos_pieza-1][2]); // Se aproxima a la pieza inicial
+      estado = 1;
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 1) {
+      Serial.printf("Movimiento dos\n");
+      goZ(); // Mantener esas coordenadas y bajar solo en z
+      estado = 2;
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 2) {
+      Serial.printf("Movimiento tres\n");
+      closeGripper(); // Cerrar la pinza
+      
+      if(counter == 5)
+      {
+        estado = 3;
+      }
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 3) {
+      goSafe(); // Mantener esas coordenadas y subir solo en z (ya con la pieza)
+      estado = 4;
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 4) {
+      goTCP(pos_final_obj[0], pos_final_obj[1], pos_final_obj[2]); // Se aproxima a la posición objetivo
+      estado = 5;
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 5) {
+      goZ(); // Mantener esas coordenadas y bajar solo en z
+      estado = 6;
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 6) {
+      openGripper(); // Abrir la pinza
+      if(counter == 5)
+      {
+        estado = 7;
+      }
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 7) {
+      goSafe(); // Mantener esas coordenadas y subir solo en z (sin la pieza)
+      estado = 8;
+      end_ctrl = 0;
+    }
+
+    if(end_ctrl == 1 && estado == 8) {
+      goTCP(home[0], home[1], home[2]); // Se lleva el robot a la posición de reposo
+      estado = 9;
+      end_ctrl = 0;
+    }
+    return 1; // Devuelve 1 para indicar la finalización del movimiento
+}
+
+void cmd_moverPieza(SerialCommands* sender)
+{
+  char* pos_pieza_str = sender->Next();
+  char* pos_tab_obj_str = sender->Next();
+
+  if(pos_pieza_str == NULL || pos_tab_obj_str == NULL)
+  {
+    Serial.println("ERROR NO_ARGS");
+    return;
+  }
+
+  int pos_pieza = atoi(pos_pieza_str);
+  int pos_tab_obj = atoi(pos_tab_obj_str);
+
+  if(pos_pieza < 1 || pos_pieza > 10)
+  {
+    Serial.printf("Posición de pieza fuera de rango: %i\n", pos_pieza);
+    return;
+  }
+
+  if(pos_tab_obj < 1 || pos_tab_obj > 9)
+  {
+    Serial.printf("Posición de tablero fuera de rango: %i\n", pos_tab_obj);
+    return;
+  }
+  estado = 0;
+  //moverPieza(pos_pieza, pos_tab_obj);
+  ficha = pos_pieza;
+  posicion = pos_tab_obj;
+}
+
+void cmd_goHome(SerialCommands* sender)
+{
+  goHome();
 }
 
 void cmd_goZ(SerialCommands* sender)
@@ -465,60 +644,119 @@ void cmd_goto(SerialCommands* sender)
 
   int n = atoi(n_str);
 
-  if(n < 0 || n > 9)
-  {
-    Serial.printf("Position number out of range: %i\n", n);
-    return;
-  }
-
   switch(n) 
-  {
-    case 1:
-      des_tcp[0] = c1[0];
-      des_tcp[1] = c1[1];
-      des_tcp[2] = c1[2];
-      break;
-    case 2:
-      des_tcp[0] = c2[0];
-      des_tcp[1] = c2[1];
-      des_tcp[2] = c2[2];
-      break;
-    case 3:
-      des_tcp[0] = c3[0];
-      des_tcp[1] = c3[1];
-      des_tcp[2] = c3[2];
-      break;
-    case 4:
-      des_tcp[0] = c4[0];
-      des_tcp[1] = c4[1];
-      des_tcp[2] = c4[2];
-      break;
-    case 5:
-      des_tcp[0] = c5[0];
-      des_tcp[1] = c5[1];
-      des_tcp[2] = c5[2];
-      break;
-    case 6:
-      des_tcp[0] = c6[0];
-      des_tcp[1] = c6[1];
-      des_tcp[2] = c6[2];
-      break;
-    case 7:
-      des_tcp[0] = c7[0];
-      des_tcp[1] = c7[1];
-      des_tcp[2] = c7[2];
-      break;
-    case 8:
-      des_tcp[0] = c8[0];
-      des_tcp[1] = c8[1];
-      des_tcp[2] = c8[2];
-      break;
-    case 9:
-      des_tcp[0] = c9[0];
-      des_tcp[1] = c9[1];
-      des_tcp[2] = c9[2];
-      break;
-  }
+    {
+      case 1:
+        des_tcp[0] = c1[0];
+        des_tcp[1] = c1[1];
+        des_tcp[2] = c1[2];
+        break;
+      case 2:
+        des_tcp[0] = c2[0];
+        des_tcp[1] = c2[1];
+        des_tcp[2] = c2[2];
+        break;
+      case 3:
+        des_tcp[0] = c3[0];
+        des_tcp[1] = c3[1];
+        des_tcp[2] = c3[2];
+        break;
+      case 4:
+        des_tcp[0] = c4[0];
+        des_tcp[1] = c4[1];
+        des_tcp[2] = c4[2];
+        break;
+      case 5:
+        des_tcp[0] = c5[0];
+        des_tcp[1] = c5[1];
+        des_tcp[2] = c5[2];
+        break;
+      case 6:
+        des_tcp[0] = c6[0];
+        des_tcp[1] = c6[1];
+        des_tcp[2] = c6[2];
+        break;
+      case 7:
+        des_tcp[0] = c7[0];
+        des_tcp[1] = c7[1];
+        des_tcp[2] = c7[2];
+        break;
+      case 8:
+        des_tcp[0] = c8[0];
+        des_tcp[1] = c8[1];
+        des_tcp[2] = c8[2];
+        break;
+      case 9:
+        des_tcp[0] = c9[0];
+        des_tcp[1] = c9[1];
+        des_tcp[2] = c9[2];
+        break;
+      case 15:
+        des_tcp[0] = home[0];
+        des_tcp[1] = home[1];
+        des_tcp[2] = home[2];
+        break;
+      case 16:
+        des_tcp[2] = _goZ;
+        break;
+      case 17:
+        des_tcp[2] = _goSafe;
+        break;
+      case 20:
+        des_tcp[0] = pos_piez_inis[0][0];
+        des_tcp[1] = pos_piez_inis[0][1];
+        des_tcp[2] = pos_piez_inis[0][2];
+        break;
+      case 21:
+        des_tcp[0] = pos_piez_inis[1][0];
+        des_tcp[1] = pos_piez_inis[1][1];
+        des_tcp[2] = pos_piez_inis[1][2];
+        break;
+      case 22:
+        des_tcp[0] = pos_piez_inis[2][0];
+        des_tcp[1] = pos_piez_inis[2][1];
+        des_tcp[2] = pos_piez_inis[2][2];
+        break;
+      case 23:
+        des_tcp[0] = pos_piez_inis[3][0];
+        des_tcp[1] = pos_piez_inis[3][1];
+        des_tcp[2] = pos_piez_inis[3][2];
+        break;
+      case 24:
+        des_tcp[0] = pos_piez_inis[4][0];
+        des_tcp[1] = pos_piez_inis[4][1];
+        des_tcp[2] = pos_piez_inis[4][2];
+        break;
+      case 25:
+        des_tcp[0] = pos_piez_inis[5][0];
+        des_tcp[1] = pos_piez_inis[5][1];
+        des_tcp[2] = pos_piez_inis[5][2];
+        break;
+      case 26:
+        des_tcp[0] = pos_piez_inis[6][0];
+        des_tcp[1] = pos_piez_inis[6][1];
+        des_tcp[2] = pos_piez_inis[6][2];
+        break;
+      case 27:
+        des_tcp[0] = pos_piez_inis[7][0];
+        des_tcp[1] = pos_piez_inis[7][1];
+        des_tcp[2] = pos_piez_inis[7][2];
+        break;
+      case 28:
+        des_tcp[0] = pos_piez_inis[8][0];
+        des_tcp[1] = pos_piez_inis[8][1];
+        des_tcp[2] = pos_piez_inis[8][2];
+        break;
+      case 29:
+        des_tcp[0] = pos_piez_inis[9][0];
+        des_tcp[1] = pos_piez_inis[9][1];
+        des_tcp[2] = pos_piez_inis[9][2];
+        break;
+      default:
+        Serial.printf("Position number out of range: %i\n", n);
+        return;
+
+    }
 }
 
 SerialCommand cmd_set_debug_("SET_DEBUG", set_debug);
@@ -544,5 +782,8 @@ SerialCommand cmd_goto_("GOTO", cmd_goto);
 
 SerialCommand cmd_goZ_("GO_Z", cmd_goZ);
 SerialCommand cmd_goSafe_("GO_SAFE", cmd_goSafe);
+SerialCommand cmd_goHome_("GO_HOME", cmd_goHome);
 SerialCommand cmd_openGripper_("OPEN_GRIPPER", cmd_openGripper);
 SerialCommand cmd_closeGripper_("CLOSE_GRIPPER", cmd_closeGripper);
+
+SerialCommand cmd_moverPieza_("MOVER_PIEZA", cmd_moverPieza);
