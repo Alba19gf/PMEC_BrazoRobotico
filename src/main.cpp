@@ -204,7 +204,7 @@ void IRAM_ATTR timerCtrl() {
       dutyCycle[2] = _pid[2]->calc(pos[2], steps_z[t]);
       _m[2]->SetDuty(dutyCycle[2]);
 
-      if(counter == 11)
+      if(counter == 16)
       {
         counter = 0;
       }

@@ -87,7 +87,7 @@ float c2[3] = { 0.0,  305.0, _goSafe};
 float c1[3] = {-40.0, 305.0, _goSafe};
 float home[3] = {80, 260, -50};//;{0.0, 330.0, -100.0};
 
-float pos_piez_inis[10][3] = {{-75, 277.5, _goSafe}, {-40, 277.5, _goSafe}, {0, 277.5, _goSafe}, {40, 277.5, _goSafe}, {75, 277.5, _goSafe}, {-75, 400, _goSafe}, {-40, 400, _goSafe}, {0, 400, _goSafe}, {40, 400, _goSafe}, {75, 400, _goSafe}};
+float pos_piez_inis[10][3] = {{-75, 279, _goSafe}, {-40, 279, _goSafe}, {0, 279, _goSafe}, {40, 279, _goSafe}, {73, 277, _goSafe}, {-75, 400, _goSafe}, {-40, 400, _goSafe}, {0, 400, _goSafe}, {40, 400, _goSafe}, {75, 400, _goSafe}};
 int moving = 0;
 
 /*################# ##
@@ -218,16 +218,16 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
             pos_final_obj[2] = c9[2];
         break;
     }
-    Serial.printf("Mover ficha %i a posición %i\n", pos_pieza, pos_tab_obj);
+    /*Serial.printf("Mover ficha %i a posición %i\n", pos_pieza, pos_tab_obj);
     //Serial.printf("pos_final_obj: %f, %f, %f\n", pos_final_obj[0], pos_final_obj[1], pos_final_obj[2]);
     Serial.printf("end_ctrl: %i\n", end_ctrl);
-    Serial.printf("estado: %i\n", estado);
+    Serial.printf("estado: %i\n", estado);*/
 
     // Se supone que se parte siempre de la posición de reposo del robot
     if(end_ctrl == 1 && estado == 0) {
-      Serial.printf("Movimiento uno\n");
+      //Serial.printf("Movimiento uno\n");
       goTCP(pos_piez_inis[pos_pieza-1][0], pos_piez_inis[pos_pieza-1][1], pos_piez_inis[pos_pieza-1][2]); // Se aproxima a la pieza inicial
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 1;
       }
@@ -235,9 +235,9 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
     }
 
     if(end_ctrl == 1 && estado == 1) {
-      Serial.printf("Movimiento dos\n");
+      //Serial.printf("Movimiento dos\n");
       goZ(); // Mantener esas coordenadas y bajar solo en z
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 2;
       }
@@ -245,10 +245,10 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
     }
 
     if(end_ctrl == 1 && estado == 2) {
-      Serial.printf("Movimiento tres\n");
+      //Serial.printf("Movimiento tres\n");
       closeGripper(); // Cerrar la pinza
       
-      if(counter == 5)
+      if(counter == 15)
       {
         estado = 3;
       }
@@ -257,7 +257,7 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 3) {
       goSafe(); // Mantener esas coordenadas y subir solo en z (ya con la pieza)
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 4;
       }
@@ -266,7 +266,7 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 4) {
       goTCP(pos_final_obj[0], pos_final_obj[1], pos_final_obj[2]); // Se aproxima a la posición objetivo
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 5;
       }
@@ -275,7 +275,7 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 5) {
       goZ(); // Mantener esas coordenadas y bajar solo en z
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 6;
       }
@@ -284,7 +284,7 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 6) {
       openGripper(); // Abrir la pinza
-      if(counter == 5)
+      if(counter == 15)
       {
         estado = 7;
       }
@@ -293,7 +293,7 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 7) {
       goSafe(); // Mantener esas coordenadas y subir solo en z (sin la pieza)
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 8;
       }
@@ -302,7 +302,7 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 8) {
       goTCP(home[0], home[1], home[2]); // Se lleva el robot a la posición de reposo
-      if(counter == 10)
+      if(counter == 15)
       {
         estado = 9;
       }
