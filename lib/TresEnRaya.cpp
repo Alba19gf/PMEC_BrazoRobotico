@@ -1,13 +1,11 @@
 #include "TresEnRaya.h"
 
-TresEnRaya::TresEnRaya() {}
-
-void TresEnRaya::Fn_MatrizState() {
+void Fn_MatrizState(int MatrizEstado[SIZE][SIZE]) {
     // Aquí se debe actualizar la matrizEstado desde la fuente externa
     // Ejemplo: MatrizEstado = actualizar_matriz(); // 
 }
 
-void TresEnRaya::convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
+void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             if (MatrizEstado[i][j] == 2)
@@ -20,7 +18,7 @@ void TresEnRaya::convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstado
     }
 }
 
-int TresEnRaya::comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
+void comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
     int combinaciones[8][3][2] = {
         {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
         {{0, 0}, {1, 0}, {2, 0}}, {{0, 1}, {1, 1}, {2, 1}}, {{0, 2}, {1, 2}, {2, 2}}, // Combinaciones para columnas
@@ -34,7 +32,8 @@ int TresEnRaya::comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate
         int e = combinaciones[i][2][0], f = combinaciones[i][2][1];
 
         if (MatrizEstadoNuevo[a][b] != 0 && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[c][d] && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[e][f]) {
-            return MatrizEstadoNuevo[a][b];
+            *empate = 0;
+            return;
         }
     }
 
@@ -42,24 +41,23 @@ int TresEnRaya::comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate
         for (int j = 0; j < SIZE; j++) {
             if (MatrizEstadoNuevo[i][j] == 0) {
                 *empate = 0;  // No es empate si hay un espacio vacío
-                return 0;
+                return;
             }
         }
     }
 
-    return 0;  // Si no hay ganador y no hay espacios vacíos, es empate
+    *empate = 1; // Si no hay ganador y no hay espacios vacíos, es empate
     // Si el robot ha ganado 1
     // Si el humano ha ganado -1
 }
 
-int TresEnRaya::minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) {
+void minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax, int* resultado) {
     int empate;
-    int ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
+    comprueba_ganador(MatrizEstadoNuevo, &empate);
 
-    if (ganador != 0) {
-        return (ganador == 1 ? 100 - prof : -100 + prof);
-    } else if (empate) {
-        return 0;
+    if (empate) {
+        *resultado = 0;
+        return;
     }
 
     if (isMax) {
@@ -68,34 +66,34 @@ int TresEnRaya::minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) 
             for (int j = 0; j < SIZE; j++) {
                 if (MatrizEstadoNuevo[i][j] == 0) {
                     MatrizEstadoNuevo[i][j] = 1;
-                    int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, 0);
+                    minimax(MatrizEstadoNuevo, prof + 1, 0, resultado);
                     MatrizEstadoNuevo[i][j] = 0;
-                    if (puntuacion > mejorPuntuacion) {
-                        mejorPuntuacion = puntuacion;
+                    if (*resultado > mejorPuntuacion) {
+                        mejorPuntuacion = *resultado;
                     }
                 }
             }
         }
-        return mejorPuntuacion;
+        *resultado = mejorPuntuacion;
     } else {
         int mejorPuntuacion = INT_MAX;
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
                 if (MatrizEstadoNuevo[i][j] == 0) {
                     MatrizEstadoNuevo[i][j] = -1;
-                    int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, 1);
+                    minimax(MatrizEstadoNuevo, prof + 1, 1, resultado);
                     MatrizEstadoNuevo[i][j] = 0;
-                    if (puntuacion < mejorPuntuacion) {
-                        mejorPuntuacion = puntuacion;
+                    if (*resultado < mejorPuntuacion) {
+                        mejorPuntuacion = *resultado;
                     }
                 }
             }
         }
-        return mejorPuntuacion;
+        *resultado = mejorPuntuacion;
     }
 }
 
-int TresEnRaya::mov_optimo() {
+void mov_optimo(int MatrizEstado[SIZE][SIZE], int* pos_optima, int* resultado) {
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
@@ -106,18 +104,18 @@ int TresEnRaya::mov_optimo() {
         for (int j = 0; j < SIZE; j++) {
             if (MatrizEstadoNuevo[i][j] == 0) {
                 MatrizEstadoNuevo[i][j] = 1;
-                int puntuacion = minimax(MatrizEstadoNuevo, 0, 0);
+                minimax(MatrizEstadoNuevo, 0, 0, resultado);
                 MatrizEstadoNuevo[i][j] = 0;
 
-                if (puntuacion > mejor_puntuacion) {
-                    mejor_puntuacion = puntuacion;
+                if (*resultado > mejor_puntuacion) {
+                    mejor_puntuacion = *resultado;
                     mejor_casilla = i * SIZE + j; // Calcular la posición óptima
                 }
             }
         }
     }
 
-    return mejor_casilla;
+    *pos_optima = mejor_casilla;
 }
 
 // int TresEnRaya::obtener_resultado() {
