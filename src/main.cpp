@@ -8,6 +8,9 @@
 #include "../lib/BotonEmergencia.h"
 #include "../lib/Comunicacion_JSON.cpp"
 #include "../lib/Comunicacion_JSON.h"
+#include "../lib/TresEnRaya.cpp"
+#include "../lib/TresEnRaya.h"
+
 
 int MatrizEstado[3][3]; // Matriz de estado global
 const int buttonPin = 15; // Pin del botón

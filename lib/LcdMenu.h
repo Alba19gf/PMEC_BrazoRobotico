@@ -8,6 +8,7 @@
 #include "RotaryEncoder.h"
 #include "Comunicacion_JSON.h"
 #include <ESP32Servo.h>
+#include "../lib/TresEnRaya.h"
 
 //LCD
 #define PIN_SDA 8

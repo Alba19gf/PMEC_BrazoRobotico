@@ -4,6 +4,20 @@ LiquidCrystal_I2C lcD(0x27, LCD_COLS, LCD_ROWS);
 
 Servo motorPinza;
 
+void Modo_Automatico_Trobot();
+void Modo_Automatico_Tusuario();
+
+
+int ejecutarJuegoSerial() {
+    int valorLeido = 0;
+    while (Serial.available() == 0) {
+        // Espera hasta que haya datos disponibles en la entrada serial
+    }
+    valorLeido = Serial.parseInt(); // Leer un entero desde la entrada serial
+    return valorLeido;
+}
+
+
 void fn_menu(byte pos, String menus[], byte sizemenu, String titulo) {
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -111,30 +125,76 @@ float calibration (float M_var, int vminC, int vmaxC,int SelecMotor) {
   level_menu=1;
 }
 
-//Funcion para salir presionando el boton del modo manual turno usuario y robot
-void Modo_Automatico_Tusuario() {
-  while (true) {
 
+
+//Funcion para salir presionando el boton del modo manual turno usuario y robot
+void Modo_Automatico_Trobot() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TURNO ROBOT");
+  lcd.setCursor(0, 1);
+  lcd.print("Robot jugando");
+
+  while (true) {
+    Serial.println("Modo automatico funcion");
     if (EmergencyPressed) {
       return; // Detener todas las acciones si el botón de emergencia está presionado
     }
 
+    int valor = ejecutarJuegoSerial();
+
+    if (valor<=9)
+    {
+      Modo_Automatico_Tusuario();
+      return;
+    }
+
+    else if (valor==10)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("JUEGO EMPATADO");
+      return;
+    }
+    else if (valor==11){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("GANO ROBOT");
+      return;
+    }
+    else if (valor==12){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("PERDISTE");
+      return;
+    }
+
     if (rotaryEncoder.isEncoderButtonClicked()) {
 
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
+      static unsigned long lastTimePressed = 0; // Soft debouncing
       if (millis() - lastTimePressed >= 500) {
         Serial.print("button pressed soft");
         
         lastTimePressed = millis();
+
         return;
       }
     }
   }
+  contador = 0;
+  level_menu = 3;
 }
 
 //Funcion para salir presionando el boton del modo manual turno usuario y robot
-void Modo_Automatico_Trobot() {
+void Modo_Automatico_Tusuario() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TURNO USUARIO");
+  lcd.setCursor(0, 1);
+  lcd.print("Mueve una ficha");
+
   while (true) {
+    Serial.println("Modo automatico turno usuario");
 
     if (EmergencyPressed) {
       return; // Detener todas las acciones si el botón de emergencia está presionado
@@ -143,10 +203,11 @@ void Modo_Automatico_Trobot() {
     if (rotaryEncoder.isEncoderButtonClicked()) {
 
       //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
+      if (millis() - lastTimePressed >= 50) {
+        Serial.print("button pressed soft en Fnmodo automatico usuario");
         
         lastTimePressed = millis();
+        Modo_Automatico_Trobot();
         return;
       }
     }
@@ -353,23 +414,13 @@ void Robot_Menu() {
       case 3: // SubMenu Empezar del Modo Automatico
         switch (contador) {
           case 0: // T. Usuario
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO USUARIO");
-            lcd.setCursor(0, 1);
-            lcd.print("Mueve una ficha");
             Modo_Automatico_Tusuario();
-            contador = 1;
+            contador = 0;
             level_menu = 3;
             //digitalWrite(LED_ROJO, ledRojoEncendido ? HIGH : LOW);
             //digitalWrite(LED_VERDE, LOW);
             break;
           case 1: // T. Robot
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT");
-            lcd.setCursor(0, 1);
-            lcd.print("Robot jugando");
             Modo_Automatico_Trobot();
             contador = 0;
             level_menu = 3;

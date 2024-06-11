@@ -1,12 +1,9 @@
 #include "TresEnRaya.h"
 
 // MatrizEstado global
-int MatrizEstado[SIZE][SIZE];
+extern int MatrizEstado[SIZE][SIZE];
 
-void Fn_MatrizState() {
-    // Aquí se debe actualizar la matrizEstado desde la fuente externa
-    // Ejemplo: MatrizEstado = actualizar_matriz(); // 
-}
+
 
 void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
