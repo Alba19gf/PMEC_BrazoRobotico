@@ -118,16 +118,3 @@ void mov_optimo(int MatrizEstado[SIZE][SIZE], int* pos_optima, int* resultado) {
     *pos_optima = mejor_casilla;
 }
 
-// int TresEnRaya::obtener_resultado() {
-//     int resultado = 0;
-//     int empate;
-//     int ganador = comprueba_ganador(MatrizEstado, &empate);
-//     if (ganador == 1) {
-//         resultado = 12; // El robot ha ganado
-//     } else if (ganador == -1) {
-//         resultado = 11; // El humano ha ganado
-//     } else if (empate) {
-//         resultado = 13; // Empate
-//     }
-//     return resultado;
-// }
