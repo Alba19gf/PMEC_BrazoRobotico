@@ -1,6 +1,9 @@
 #include "TresEnRaya.h"
 
-void Fn_MatrizState(int MatrizEstado[SIZE][SIZE]) {
+// MatrizEstado global
+int MatrizEstado[SIZE][SIZE];
+
+void Fn_MatrizState() {
     // Aquí se debe actualizar la matrizEstado desde la fuente externa
     // Ejemplo: MatrizEstado = actualizar_matriz(); // 
 }
@@ -93,7 +96,7 @@ void minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax, int* result
     }
 }
 
-void mov_optimo(int MatrizEstado[SIZE][SIZE], int* pos_optima, int* resultado) {
+void mov_optimo(int* pos_optima, int* resultado) {
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
@@ -117,27 +120,27 @@ void mov_optimo(int MatrizEstado[SIZE][SIZE], int* pos_optima, int* resultado) {
 
     *pos_optima = mejor_casilla;
 }
+
 void ejecutarJuego() {
     // Llamar a la función externa para actualizar MatrizEstado
-    int MatrizEstado[SIZE][SIZE];
-    Fn_MatrizState(MatrizEstado);
+    Fn_MatrizState();
 
     // Convertir MatrizEstado a MatrizEstadoNuevo
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
     // Obtener la posición óptima
-    int pos_optima, resultado;
-    mov_optimo(MatrizEstado, &pos_optima, &resultado);
+    int pos_optima;
+    int resultado;
+    mov_optimo(&pos_optima, &resultado);
 
     // Comprobar el resultado y asignar el valor adecuado
-    if (resultado == 0) {
-        Serial.println("Empate.");
-    } else if (resultado == 1) {
-        Serial.println("El humano ha ganado.");
+    comprueba_ganador(MatrizEstadoNuevo, &resultado);
+    if (resultado == 1) {
+        resultado = 13; // Empate
     } else if (resultado == 12) {
-        Serial.println("El robot ha ganado.");
+        // El robot ha ganado
+    } else if (resultado == 11) {
+        // El humano ha ganado
     }
-    Serial.print("Posición óptima: ");
-    Serial.println(pos_optima);
 }
