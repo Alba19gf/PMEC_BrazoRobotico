@@ -140,7 +140,7 @@ void openGripper()
 
 void closeGripper()
 {
-  motorPinza.write(28);
+  motorPinza.write(30);
   Serial.printf("Cerrar pinza\n");
 }
 
@@ -227,14 +227,20 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
     if(end_ctrl == 1 && estado == 0) {
       Serial.printf("Movimiento uno\n");
       goTCP(pos_piez_inis[pos_pieza-1][0], pos_piez_inis[pos_pieza-1][1], pos_piez_inis[pos_pieza-1][2]); // Se aproxima a la pieza inicial
-      estado = 1;
+      if(counter == 10)
+      {
+        estado = 1;
+      }
       end_ctrl = 0;
     }
 
     if(end_ctrl == 1 && estado == 1) {
       Serial.printf("Movimiento dos\n");
       goZ(); // Mantener esas coordenadas y bajar solo en z
-      estado = 2;
+      if(counter == 10)
+      {
+        estado = 2;
+      }
       end_ctrl = 0;
     }
 
@@ -251,19 +257,28 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 3) {
       goSafe(); // Mantener esas coordenadas y subir solo en z (ya con la pieza)
-      estado = 4;
+      if(counter == 10)
+      {
+        estado = 4;
+      }
       end_ctrl = 0;
     }
 
     if(end_ctrl == 1 && estado == 4) {
       goTCP(pos_final_obj[0], pos_final_obj[1], pos_final_obj[2]); // Se aproxima a la posición objetivo
-      estado = 5;
+      if(counter == 10)
+      {
+        estado = 5;
+      }
       end_ctrl = 0;
     }
 
     if(end_ctrl == 1 && estado == 5) {
       goZ(); // Mantener esas coordenadas y bajar solo en z
-      estado = 6;
+      if(counter == 10)
+      {
+        estado = 6;
+      }
       end_ctrl = 0;
     }
 
@@ -278,13 +293,19 @@ int moverPieza(int pos_pieza, int pos_tab_obj) {
 
     if(end_ctrl == 1 && estado == 7) {
       goSafe(); // Mantener esas coordenadas y subir solo en z (sin la pieza)
-      estado = 8;
+      if(counter == 10)
+      {
+        estado = 8;
+      }
       end_ctrl = 0;
     }
 
     if(end_ctrl == 1 && estado == 8) {
       goTCP(home[0], home[1], home[2]); // Se lleva el robot a la posición de reposo
-      estado = 9;
+      if(counter == 10)
+      {
+        estado = 9;
+      }
       end_ctrl = 0;
     }
     return 1; // Devuelve 1 para indicar la finalización del movimiento
