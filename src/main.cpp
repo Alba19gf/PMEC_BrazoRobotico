@@ -5,18 +5,17 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h>  // Para INT_MIN y INT_MAX
-#include "../lib/Comunicacion_JSON.cpp"
-#include "../lib/Comunicacion_JSON.h"
+
 
 #define SIZE 3 // Definir tablero de 3x3 
 
-// Declarar la matriz global
+// Declarar la matriz global ENTRADA DE VISION
 int MatrizEstado[SIZE][SIZE];
 
 // Declarar la función externa para recibir la matriz de visión
 extern void Fn_MatrizState();
 
-
+// // Función para actualizar la matriz de prueba 
 // void Fn_MatrizState() {
 //     // Actualiza MatrizEstado con un estado de prueba
 //     int estado_prueba[SIZE][SIZE] = {
@@ -26,7 +25,6 @@ extern void Fn_MatrizState();
 //     };
 //     memcpy(MatrizEstado, estado_prueba, sizeof(estado_prueba));
 // }
-
 
 void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; i++) {
@@ -72,7 +70,7 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate) {
     // Si el robot ha ganado 1
     // Si el humano ha ganado -1
 }
-//Algoritmo minimax explora rodas las posibles jugadas futuras y elegir la que maximiza la puntuación del robot
+
 int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) {
     int empate;
     int ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
@@ -116,10 +114,9 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax) {
     }
 }
 
-// La función mov_optimo utiliza el algoritmo minimax para encontar la mejor jugada posible para el robot
-// Actualiza la fila y columna con las coordenadas de la mejor jugada
-void mov_optimo(int MatrizEstadoNuevo[SIZE][SIZE], int *fila, int *columna) {
+int mov_optimo(int MatrizEstadoNuevo[SIZE][SIZE]) {
     int mejor_puntuacion = INT_MIN;
+    int mejor_casilla = -1;
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -130,15 +127,17 @@ void mov_optimo(int MatrizEstadoNuevo[SIZE][SIZE], int *fila, int *columna) {
 
                 if (puntuacion > mejor_puntuacion) {
                     mejor_puntuacion = puntuacion;
-                    *fila = i;
-                    *columna = j;
+                    mejor_casilla = i * SIZE + j; // Calcular la posición única
                 }
             }
         }
     }
+
+    return mejor_casilla;
 }
 
 void setup() {
+    // Inicializar comunicación serial
     Serial.begin(115200);
 
     // Llamar a la función externa para actualizar MatrizEstado
@@ -148,38 +147,23 @@ void setup() {
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
-    int empate;
-    int ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
+    // Obtener la posición óptima
+    int pos_optima = mov_optimo(MatrizEstadoNuevo);
 
+    // Comprobar el resultado y asignar el valor adecuado
+    int resultado = 0;
+    int ganador = comprueba_ganador(MatrizEstadoNuevo, &resultado);
     if (ganador == 1) {
-        Serial.println("El robot ha ganado.");
+        resultado = 12; // El robot ha ganado
     } else if (ganador == -1) {
-        Serial.println("El jugador humano ha ganado.");
-    } else if (empate) {
-        Serial.println("El juego ha terminado en empate.");
-    } else { // Si no hay ganador se encuentra el mejor movimiento para el robot
-        int fila, columna;
-        mov_optimo(MatrizEstadoNuevo, &fila, &columna);
-        MatrizEstadoNuevo[fila][columna] = 1;
-
-        // Se vuelve a comprobar el ganador
-        ganador = comprueba_ganador(MatrizEstadoNuevo, &empate);
-
-        Serial.print("La máquina debe hacer su próximo movimiento en la fila ");
-        Serial.print(fila);
-        Serial.print(" y columna ");
-        Serial.println(columna);
-
-        if (ganador == 1) {
-            Serial.println("El robot ha ganado con este movimiento.");
-        } else if (ganador == -1) {
-            Serial.println("El jugador humano ha ganado.");
-        } else if (empate) {
-            Serial.println("El juego ha terminado en empate con este movimiento.");
-        }
+        resultado = 11; // El humano ha ganado
+    } else if (resultado == 1) {
+        resultado = 13; // Empate
     }
-}
 
-void loop() {
-    // Nada que hacer aquí
+    // Enviar resultados a través de Serial
+    Serial.print("Posición óptima: ");
+    Serial.println(pos_optima);
+    Serial.print("Resultado: ");
+    Serial.println(resultado);
 }
