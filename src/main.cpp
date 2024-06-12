@@ -26,24 +26,6 @@ void setMatrizEstadoPrueba()
   }
 }
 
-void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
-{
-  Serial.println("Convirtiendo matriz de estado Global");
-
-  for (int i = 0; i < SIZE; i++)
-  {
-    for (int j = 0; j < SIZE; j++)
-    {
-      if (MatrizEstado[i][j] == 2)
-        MatrizEstadoNuevo[i][j] = 0; // CASILLAS VACÍAS se convierten a 0
-      else if (MatrizEstado[i][j] == 0)
-        MatrizEstadoNuevo[i][j] = -1; // Cambia de representación 0 a -1 JUGADOR HUMANO
-      else
-        MatrizEstadoNuevo[i][j] = 1; // Los demás valores se mantienen como 1 JUGADOR ROBOT
-    }
-  }
-  Fn_printMatriz(MatrizEstadoNuevo);
-}
 
 void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
 {
@@ -61,7 +43,7 @@ void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
         MatrizEstadoNuevo[i][j] = 1; // Los demás valores se mantienen como 1 JUGADOR ROBOT
     }
   }
-  Fn_printMatriz(MatrizEstadoNuevo);
+ 
 }
 
 int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax)
@@ -117,8 +99,7 @@ int mov_optimo()
 {
   int MatrizEstadoNuevo[SIZE][SIZE];
   convertir_matrizGlobal(MatrizEstadoNuevo);
-  Serial.println("Matriz convertida a Minimax, en mov optimo");
-  Fn_printMatriz(MatrizEstadoNuevo);
+ 
 
   int mejor_puntuacion = INT_MIN;
   int mejor_casilla = -1;
