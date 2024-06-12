@@ -114,7 +114,7 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax)
 int mov_optimo()
 {
     int MatrizEstadoNuevo[SIZE][SIZE];
-    convertir_matrizGlobal(MatrizEstadoNuevo);
+    MatrizEstadoNuevo[SIZE][SIZE]=convertir_matrizGlobal();
     Serial.println("Matriz convertida a Minimax, en mov optimo");
     Fn_printMatriz(MatrizEstadoNuevo);
 
