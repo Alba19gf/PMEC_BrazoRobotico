@@ -1,17 +1,13 @@
 //* ALGORITMO DE JUEGO AUTOMÁTICO
 // Este código implementa un juego de tres en raya (tic-tac-toe) en el que el robot calcula su mejor movimiento usando el algoritmo Minimax y realiza su jugada.
 // La función Fn_MatrizState actualiza el estado del tablero desde una fuente externa, y el programa convierte ese estado a una representación interna para procesar el juego.
-
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h> // Para INT_MIN y INT_MAX
 
 const int SIZE = 3;
-
 int MatrizEstado[SIZE][SIZE];
 
-// // Declarar la función externa para recibir la matriz de visión
-// extern void Fn_MatrizState();
 void setMatrizEstadoPrueba()
 {
   // Define una matriz de estado de prueba
@@ -46,7 +42,6 @@ void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
 
 int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
 {
-  Serial.println("Comprobando ganador");
   int combinaciones[8][3][2] = {
       {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
       {{0, 0}, {1, 0}, {2, 0}},
@@ -64,7 +59,6 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
 
     if (MatrizEstadoNuevo[a][b] != 0 && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[c][d] && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[e][f])
     {
-      Serial.println("GANO");
       return MatrizEstadoNuevo[a][b]; // Devuelve 1 si gana el robot, -1 si gana el humano
     }
   }
@@ -80,7 +74,6 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
     }
   }
 
-  Serial.println("EMPATE");
   return 2; // Si no hay ganador y no hay espacios vacíos, es empate
 }
 
@@ -168,35 +161,26 @@ void setup()
   // Inicializar comunicación serial
   Serial.begin(115200);
 
-  int MatrizMinimax[SIZE][SIZE];
-  convertir_matrizGlobal(MatrizMinimax); // Llamada para convertir la matriz global
-
-  // Obtener la posición óptima
-  int pos_optima = mov_optimo();
-
-  // Si la posición óptima está entre 0 y 8, retornar esa posición
-  if (pos_optima >= 0 && pos_optima <= 8)
+  setMatrizEstadoPrueba();
+  int MatrizEstadoNuevo[SIZE][SIZE];
+  convertir_matrizGlobal(MatrizEstadoNuevo);
+  int resultado = comprueba_ganador(MatrizEstadoNuevo);
+  Serial.print("El resultado del juego es: ");
+  if (resultado == 1)
   {
-    pos_optima = pos_optima + 1;
+    Serial.println("El robot ha ganado.");
   }
-
-  // Si no hay movimientos posibles, verificar el resultado del juego
-  else if (pos_optima == -1)
+  else if (resultado == -1)
   {
-    int resultado = comprueba_ganador(MatrizMinimax);
-    if (resultado == 2)
-    {
-      pos_optima = 10; // Empate
-    }
-    else if (resultado == 1)
-    {
-      pos_optima = 11; // El robot ha ganado
-    }
-    else if (resultado == -1)
-    {
-      pos_optima = 12; // El humano ha ganado
-    }
+    Serial.println("El humano ha ganado.");
   }
-
-  return pos_optima;
+  else if (resultado == 2)
+  {
+    Serial.println("Es un empate.");
+  }
+  else
+  {
+    Serial.println("El juego sigue en curso.");
+  }
+}
 }
