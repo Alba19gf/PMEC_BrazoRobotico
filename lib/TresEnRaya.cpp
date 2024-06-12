@@ -147,32 +147,33 @@ int PosicionOptima()
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
     // Obtener la posición óptima
-    int pos_optima = mov_optimo(MatrizEstado);
+    int pos_optima = mov_optimo(MatrizEstadoNuevo);
 
     // Si la posición óptima está entre 0 y 8, retornar esa posición
-    if (pos_optima >= 0 && pos_optima <= 8) {
+    if (pos_optima >= 0 && pos_optima <= 8)
+    {
         return pos_optima;
     }
 
     // Si no hay movimientos posibles, verificar el resultado del juego
-    pos_optima = comprueba_ganador(MatrizEstado);
+    if (pos_optima == -1)
+    {
+        pos_optima = comprueba_ganador(MatrizEstadoNuevo);
+        if (pos_optima == 2)
         {
-            if (pos_optima == 2)
-            {
-                pos_optima = 12; // Empate
-            }
-            else if (pos_optima == 1)
-            {
-                pos_optima = 11; // El robot ha ganado
-            }
-            else if (pos_optima == -1)
-            {
-                pos_optima = 10; // El humano ha ganado
-            }
-
-            return pos_optima;
+            return 9; // Empate
         }
-    
+        else if (pos_optima == 1)
+        {
+            return 10; // El robot ha ganado
+        }
+        else if (pos_optima == -1)
+        {
+            return 11; // El humano ha ganado
+        }
+    }
+
+    return pos_optima;
 }
 
 // int ResultadoJuego()
