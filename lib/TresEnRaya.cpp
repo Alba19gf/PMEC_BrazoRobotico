@@ -32,7 +32,7 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE]) {
         int e = combinaciones[i][2][0], f = combinaciones[i][2][1];
 
         if (MatrizEstadoNuevo[a][b] != 0 && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[c][d] && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[e][f]) {
-            return MatrizEstadoNuevo[a][b];
+            return MatrizEstadoNuevo[a][b]; // Devuelve 1 si gana el robot, -1 si gana el humano
         }
     }
 
