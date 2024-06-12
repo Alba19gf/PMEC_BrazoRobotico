@@ -1,9 +1,6 @@
 // TresEnRaya.cpp
 #include "TresEnRaya.h"
 
-
-
-
 int convertir_matrizGlobal()
 {
     int MatrizEstadoNuevo[SIZE][SIZE];
@@ -23,7 +20,6 @@ int convertir_matrizGlobal()
     }
     Fn_printMatriz(MatrizEstadoNuevo);
     return MatrizEstadoNuevo[SIZE][SIZE];
-    
 }
 
 int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
@@ -63,17 +59,19 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
     }
 
     return 2; // Si no hay ganador y no hay espacios vacíos, es empate
-
+    Serial.println("EMPATE");
 }
 
-int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
+int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax)
 {
-    int empate = comprueba_ganador(MatrizEstadoNuevo);
+    int ganador = comprueba_ganador(MatrizEstadoNuevo);
 
-    if (empate)
-    {
+    if (ganador == 1)
+        return 100 - prof; // Robot gana
+    if (ganador == -1)
+        return -100 + prof; // Jugador humano gana
+    if (ganador == 2)       // Empate
         return 0;
-    }
 
     if (isMax)
     {
@@ -85,7 +83,7 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
                 if (MatrizEstadoNuevo[i][j] == 0)
                 {
                     MatrizEstadoNuevo[i][j] = 1;
-                    int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, 0);
+                    int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, false);
                     MatrizEstadoNuevo[i][j] = 0;
                     mejorPuntuacion = max(mejorPuntuacion, puntuacion);
                 }
@@ -103,7 +101,7 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
                 if (MatrizEstadoNuevo[i][j] == 0)
                 {
                     MatrizEstadoNuevo[i][j] = -1;
-                    int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, 1);
+                    int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, true);
                     MatrizEstadoNuevo[i][j] = 0;
                     mejorPuntuacion = min(mejorPuntuacion, puntuacion);
                 }
@@ -115,10 +113,10 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
 
 int mov_optimo()
 {
-    
+
     int MatrizEstadoNuevo[SIZE][SIZE];
 
-    MatrizEstadoNuevo[SIZE][SIZE]=convertir_matrizGlobal();
+    MatrizEstadoNuevo[SIZE][SIZE] = convertir_matrizGlobal();
     Serial.println("Matriz convertida a Minimax, en mov optimo");
     Fn_printMatriz(MatrizEstadoNuevo);
 
@@ -155,9 +153,7 @@ int PosicionOptima()
     Fn_printMatriz(MatrizEstado);
 
     int MatrizMinimax[3][3];
-    MatrizMinimax[3][3]=convertir_matrizGlobal();
-
-
+    MatrizMinimax[3][3] = convertir_matrizGlobal();
 
     // Obtener la posición óptima
     int pos_optima = mov_optimo();
