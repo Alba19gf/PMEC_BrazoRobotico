@@ -172,7 +172,7 @@ int ResultadoJuego()
     }
     else if (resultadoJuego == -1)
     {
-        resultadoJuego = 13; // El humano ha ganado
+        resultadoJuego = 11; // El humano ha ganado
     }
     else if (resultadoJuego == 0)
     {
