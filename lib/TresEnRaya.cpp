@@ -133,12 +133,12 @@ int ResultadoJuego() {
 
     // Comprobar el resultado y asignar el valor adecuado
     int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    if (resultadoJuego == 1) {
+    if (resultadoJuego == 2) {
         resultadoJuego = 13; // Empate
-    } else if (resultadoJuego == 12) {
-        // El robot ha ganado
-    } else if (resultadoJuego == 11) {
-        // El humano ha ganado
+    } else if (resultadoJuego == 1) {
+         resultadoJuego = 12; // El robot ha ganado
+    } else if (resultadoJuego == -1) {
+         resultadoJuego = 13; // El humano ha ganado
     }
 
     return resultadoJuego;
