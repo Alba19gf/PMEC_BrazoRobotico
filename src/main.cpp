@@ -8,7 +8,7 @@
 
 const int SIZE = 3;
 
-int MatrizEstado[SIZE][SIZE]; 
+int MatrizEstado[SIZE][SIZE];
 
 // // Declarar la función externa para recibir la matriz de visión
 // extern void Fn_MatrizState();
@@ -26,7 +26,6 @@ void setMatrizEstadoPrueba()
   }
 }
 
-
 void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
 {
   Serial.println("Convirtiendo matriz de estado Global");
@@ -43,7 +42,46 @@ void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
         MatrizEstadoNuevo[i][j] = 1; // Los demás valores se mantienen como 1 JUGADOR ROBOT
     }
   }
- 
+}
+
+int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
+{
+  Serial.println("Comprobando ganador");
+  int combinaciones[8][3][2] = {
+      {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
+      {{0, 0}, {1, 0}, {2, 0}},
+      {{0, 1}, {1, 1}, {2, 1}},
+      {{0, 2}, {1, 2}, {2, 2}}, // Combinaciones para columnas
+      {{0, 0}, {1, 1}, {2, 2}},
+      {{0, 2}, {1, 1}, {2, 0}} // Combinaciones para diagonales
+  };
+
+  for (int i = 0; i < 8; i++)
+  {
+    int a = combinaciones[i][0][0], b = combinaciones[i][0][1];
+    int c = combinaciones[i][1][0], d = combinaciones[i][1][1];
+    int e = combinaciones[i][2][0], f = combinaciones[i][2][1];
+
+    if (MatrizEstadoNuevo[a][b] != 0 && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[c][d] && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[e][f])
+    {
+      Serial.println("GANO");
+      return MatrizEstadoNuevo[a][b]; // Devuelve 1 si gana el robot, -1 si gana el humano
+    }
+  }
+
+  for (int i = 0; i < SIZE; i++)
+  {
+    for (int j = 0; j < SIZE; j++)
+    {
+      if (MatrizEstadoNuevo[i][j] == 0)
+      {
+        return 0; // No es empate si hay un espacio vacío
+      }
+    }
+  }
+
+  Serial.println("EMPATE");
+  return 2; // Si no hay ganador y no hay espacios vacíos, es empate
 }
 
 int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax)
@@ -99,7 +137,6 @@ int mov_optimo()
 {
   int MatrizEstadoNuevo[SIZE][SIZE];
   convertir_matrizGlobal(MatrizEstadoNuevo);
- 
 
   int mejor_puntuacion = INT_MIN;
   int mejor_casilla = -1;
