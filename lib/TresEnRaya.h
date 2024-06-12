@@ -4,8 +4,11 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h>
-extern int MatrizEstado[3][3]; //MatrizEstado se declara extern para estar disponible en todo el programa
 #define SIZE 3
+// const int SIZE = 3;
+
+extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar disponible en todo el programa
+
 
 void Fn_printMatriz(int MatrizEstadoNuevo[SIZE][SIZE]);
 int convertir_matrizGlobal(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]);
