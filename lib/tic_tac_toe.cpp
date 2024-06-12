@@ -1,15 +1,49 @@
-//* ALGORITMO DE JUEGO AUTOMÁTICO
-// Este código implementa un juego de tres en raya (tic-tac-toe) en el que el robot calcula su mejor movimiento usando el algoritmo Minimax y realiza su jugada.
-// La función Fn_MatrizState actualiza el estado del tablero desde una fuente externa, y el programa convierte ese estado a una representación interna para procesar el juego.
-#include <Arduino.h>
-#include <stdio.h>
-#include <limits.h> // Para INT_MIN y INT_MAX
-#include <Arduino.h>
+#include "tic_tac_toe.h"
 
-// Definición del tamaño del tablero
-#define N 3
+void setup_tic_tac_toe() {
+    // Configuración inicial, si es necesario
+}
 
-// Función para comprobar el ganador y si hay empate
+void loop_tic_tac_toe() {
+    // Tablero de ejemplo
+    int MatrizEstado[N][N] = {
+        {1, 2, 2},
+        {0, 1, 2},
+        {0, 2, 2}
+    };
+
+    int MatrizEstadoNuevo[N][N];
+    convertir_tablero(MatrizEstado, MatrizEstadoNuevo);
+
+    // Mostrar el tablero convertido (ejemplo)
+    Serial.begin(9600);
+    Serial.println("MatrizEstadoNuevo:");
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            Serial.print(MatrizEstadoNuevo[i][j]);
+            Serial.print(" ");
+        }
+        Serial.println();
+    }
+
+    int pos_optima, resultado;
+    movOptimo(MatrizEstadoNuevo, &pos_optima, &resultado);
+
+    // Mostrar el resultado (ejemplo)
+    if (resultado == 11) {
+        Serial.println("El robot ha ganado.");
+    } else if (resultado == 12) {
+        Serial.println("El jugador humano ha ganado.");
+    } else if (resultado == 13) {
+        Serial.println("El juego ha terminado en empate.");
+    } else {
+        Serial.print("La máquina debe hacer su próximo movimiento en la casilla ");
+        Serial.println(pos_optima + 1);
+    }
+
+    delay(1000); // Ejemplo de espera entre iteraciones en el loop
+}
+
 void compruebaGanador(int MatrizEstadoNuevo[N][N], int *ganador, bool *empate) {
     int combinaciones[8][3] = {
         {0, 1, 2}, {3, 4, 5}, {6, 7, 8},  // filas
@@ -41,7 +75,6 @@ void compruebaGanador(int MatrizEstadoNuevo[N][N], int *ganador, bool *empate) {
     }
 }
 
-// Función minimax recursiva
 int minimax(int MatrizEstadoNuevo[N][N], int prof, bool isMax) {
     int ganador;
     bool empate;
@@ -77,7 +110,6 @@ int minimax(int MatrizEstadoNuevo[N][N], int prof, bool isMax) {
     return mejorPuntuacion;
 }
 
-// Función para encontrar la mejor posición y resultado
 void movOptimo(int MatrizEstadoNuevo[N][N], int *pos_optima, int *resultado) {
     int casillas_disponibles[N * N];
     int num_disponibles = 0;
@@ -124,7 +156,6 @@ void movOptimo(int MatrizEstadoNuevo[N][N], int *pos_optima, int *resultado) {
     }
 }
 
-// Función para convertir el tablero
 void convertir_tablero(int MatrizEstado[N][N], int MatrizEstadoNuevo[N][N]) {
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -137,48 +168,4 @@ void convertir_tablero(int MatrizEstado[N][N], int MatrizEstadoNuevo[N][N]) {
             }
         }
     }
-}
-
-void setup() {
-    // Configuración inicial, si es necesario
-}
-
-void loop() {
-    // Tablero de ejemplo
-    int MatrizEstado[N][N] = {
-        {1, 2, 2},
-        {0, 1, 2},
-        {0, 2, 2}
-    };
-
-    int MatrizEstadoNuevo[N][N];
-    convertir_tablero(MatrizEstado, MatrizEstadoNuevo);
-
-    // Mostrar el tablero convertido (ejemplo)
-    Serial.begin(9600);
-    Serial.println("MatrizEstadoNuevo:");
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            Serial.print(MatrizEstadoNuevo[i][j]);
-            Serial.print(" ");
-        }
-        Serial.println();
-    }
-
-    int pos_optima, resultado;
-    movOptimo(MatrizEstadoNuevo, &pos_optima, &resultado);
-
-    // Mostrar el resultado (ejemplo)
-    if (resultado == 11) {
-        Serial.println("El robot ha ganado.");
-    } else if (resultado == 12) {
-        Serial.println("El jugador humano ha ganado.");
-    } else if (resultado == 13) {
-        Serial.println("El juego ha terminado en empate.");
-    } else {
-        Serial.print("La máquina debe hacer su próximo movimiento en la casilla ");
-        Serial.println(pos_optima + 1);
-    }
-
-    delay(1000); // Ejemplo de espera entre iteraciones en el loop
 }
