@@ -155,7 +155,7 @@ void loop() {
     convertir_tablero(MatrizEstado, MatrizEstadoNuevo);
 
     // Mostrar el tablero convertido (ejemplo)
-    Serial.begin(9600);
+    Serial.begin(115200);
     Serial.println("MatrizEstadoNuevo:");
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
