@@ -2,6 +2,11 @@
 #define TIC_TAC_TOE_H
 
 #include <Arduino.h>
+//#include "LcdMenu.h"
+
+#include <stdio.h>
+#include <limits.h>
+extern int MatrizEstado[3][3];
 
 #define N 3
 
