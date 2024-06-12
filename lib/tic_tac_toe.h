@@ -7,6 +7,8 @@
 
 
 extern int MatrizEstado[N][N]; //MatrizEstado se declara extern para estar disponible en todo el programa
+void Fn_MatrizState();// Función para actualizar el estado de la matriz
+void Fn_printMatriz(int MatrizEstadoNuevo[N][N]);
 
 void compruebaGanador(int MatrizEstadoNuevo[N][N], int *ganador, bool *empate);
 int minimax(int MatrizEstadoNuevo[N][N], int prof, bool isMax);

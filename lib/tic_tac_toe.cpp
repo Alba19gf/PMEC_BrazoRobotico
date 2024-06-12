@@ -1,6 +1,5 @@
 #include "tic_tac_toe.h"
 
-
 void compruebaGanador(int MatrizEstadoNuevo[N][N], int *ganador, bool *empate)
 {
     int combinaciones[8][3] = {
@@ -168,13 +167,11 @@ void convertir_tablero(int MatrizEstado[N][N], int MatrizEstadoNuevo[N][N])
 int PosicionOptima()
 {
     Fn_MatrizState(); // Si es necesario, llama a esta función para actualizar MatrizEstado
-    // Serial.println("Matriz en posicion óptima recibida:");
-    // Fn_printMatriz(int MatrizEstadoNuevo[N][N]); // Si es necesario, imprime la matriz recibida
 
     int MatrizEstadoNuevo[N][N];
     convertir_tablero(MatrizEstado, MatrizEstadoNuevo); // Convertir la matriz original a la representación adecuada
 
-    int pos_optima, resultado;
+    int pos_optima, resultado = 0;                         // Inicializamos resultado a 0
     movOptimo(MatrizEstadoNuevo, &pos_optima, &resultado); // Encontrar la posición óptima
 
     // Si la posición óptima está entre 0 y 8, retorna esa posición
@@ -186,16 +183,19 @@ int PosicionOptima()
     // Si no hay movimientos posibles, verificar el resultado del juego
     else if (pos_optima == -1)
     {
-        resultado = compruebaGanador(MatrizEstadoNuevo); // Verificar el resultado del juego
-        if (resultado == 2)
+        int ganador;
+        bool empate;
+        compruebaGanador(MatrizEstadoNuevo, &ganador, &empate); // Verificar el resultado del juego
+
+        if (ganador == 2)
         {
             pos_optima = 10; // Empate
         }
-        else if (resultado == 1)
+        else if (ganador == 1)
         {
             pos_optima = 11; // El robot ha ganado
         }
-        else if (resultado == -1)
+        else if (ganador == -1)
         {
             pos_optima = 12; // El humano ha ganado
         }
