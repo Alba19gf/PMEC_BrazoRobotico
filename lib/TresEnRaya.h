@@ -4,13 +4,18 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h>
-extern int MatrizEstado[3][3];
 #define SIZE 3
+// const int SIZE = 3;
+
+extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar disponible en todo el programa
 
 
-void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]);
-void comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE], int *empate);
-void minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax, int* resultado);
+void Fn_MatrizState();// Función para actualizar el estado de la matriz
+void Fn_printMatriz(int MatrizEstadoNuevo[SIZE][SIZE]);
+int convertir_matrizGlobal(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]);
+
+int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE]);
+int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax);
 int mov_optimo();
 
 int PosicionOptima();
