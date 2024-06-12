@@ -1,13 +1,14 @@
 // TresEnRaya.cpp
 #include "TresEnRaya.h"
 
-void Fn_MatrizState()
-{
-    // Aquí se debe actualizar la matrizEstado desde la fuente externa
-}
 
-void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE])
+
+
+int convertir_matrizGlobal()
 {
+    int MatrizEstadoNuevo[SIZE][SIZE];
+    Serial.println("Convirtiendo matriz de estado Global");
+
     for (int i = 0; i < SIZE; i++)
     {
         for (int j = 0; j < SIZE; j++)
@@ -20,10 +21,14 @@ void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][
                 MatrizEstadoNuevo[i][j] = 1; // Los demás valores se mantienen como 1  JUGADOR ROBOT
         }
     }
+    Fn_printMatriz(MatrizEstadoNuevo);
+    return MatrizEstadoNuevo[SIZE][SIZE];
+    
 }
 
 int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
 {
+    Serial.println("Comprobando ganador");
     int combinaciones[8][3][2] = {
         {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
         {{0, 0}, {1, 0}, {2, 0}},
@@ -42,6 +47,7 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
         if (MatrizEstadoNuevo[a][b] != 0 && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[c][d] && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[e][f])
         {
             return MatrizEstadoNuevo[a][b]; // Devuelve 1 si gana el robot, -1 si gana el humano
+            Serial.println("GANO");
         }
     }
 
@@ -56,7 +62,8 @@ int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
         }
     }
 
-    return 1; // Si no hay ganador y no hay espacios vacíos, es empate
+    return 2; // Si no hay ganador y no hay espacios vacíos, es empate
+
 }
 
 int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
@@ -106,10 +113,14 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
     }
 }
 
-int mov_optimo(int MatrizEstado[SIZE][SIZE])
+int mov_optimo()
 {
+    
     int MatrizEstadoNuevo[SIZE][SIZE];
-    convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
+
+    MatrizEstadoNuevo[SIZE][SIZE]=convertir_matrizGlobal();
+    Serial.println("Matriz convertida a Minimax, en mov optimo");
+    Fn_printMatriz(MatrizEstadoNuevo);
 
     int mejor_puntuacion = INT_MIN;
     int mejor_casilla = -1;
@@ -138,29 +149,31 @@ int mov_optimo(int MatrizEstado[SIZE][SIZE])
 
 int PosicionOptima()
 {
-    // Llamar a la función externa para actualizar MatrizEstado
-    int MatrizEstado[SIZE][SIZE];
     Fn_MatrizState();
+    // Llamar a la función externa para actualizar MatrizEstado
+    Serial.println("Matriz en posicion oprtima recibida:");
+    Fn_printMatriz(MatrizEstado);
 
-    // Convertir MatrizEstado a MatrizEstadoNuevo
-    int MatrizEstadoNuevo[SIZE][SIZE];
-    convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
+    int MatrizMinimax[3][3];
+    MatrizMinimax[3][3]=convertir_matrizGlobal();
+
+
 
     // Obtener la posición óptima
-    int pos_optima = mov_optimo(MatrizEstadoNuevo);
+    int pos_optima = mov_optimo();
 
     // Si la posición óptima está entre 0 y 8, retornar esa posición
     if (pos_optima >= 0 && pos_optima <= 8)
     {
-        return pos_optima + 1;
+        pos_optima = pos_optima + 1;
     }
 
     // Si no hay movimientos posibles, verificar el resultado del juego
-    if (pos_optima == -1)
+    else if (pos_optima == -1)
     {
         if (pos_optima == -1)
         {
-            int resultado = comprueba_ganador(MatrizEstadoNuevo);
+            int resultado = comprueba_ganador(MatrizMinimax);
             if (resultado == 2)
             {
                 pos_optima = 10; // Empate
@@ -174,10 +187,7 @@ int PosicionOptima()
                 pos_optima = 12; // El humano ha ganado
             }
         }
-
-        return pos_optima;
     }
 
-    // Por si acaso
-    return -1;
+    return pos_optima;
 }

@@ -146,8 +146,10 @@ void Modo_Automatico_Trobot() {
       return; // Detener todas las acciones si el botón de emergencia está presionado
     }
 
-    int valor = ejecutarJuegoSerial();
-    //int valor=mov_optimo();
+    //int valor = ejecutarJuegoSerial();
+    int valor = ComputadoraMovimiento();
+    Serial.println(valor);
+    
 
     if (valor<=9)
     {
@@ -200,7 +202,7 @@ void Modo_Automatico_Tusuario() {
   lcd.print("Mueve una ficha");
 
   while (true) {
-    Serial.println("Modo automatico turno usuario");
+    //Serial.println("Modo automatico turno usuario");
 
     if (EmergencyPressed) {
       return; // Detener todas las acciones si el botón de emergencia está presionado

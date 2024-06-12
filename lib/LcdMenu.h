@@ -8,7 +8,7 @@
 #include "RotaryEncoder.h"
 #include "Comunicacion_JSON.h"
 #include <ESP32Servo.h>
-#include "../lib/TresEnRaya.h"
+#include "../lib/TresEnRayaTest.h"
 
 //LCD
 #define PIN_SDA 8
@@ -33,6 +33,9 @@ int last_contador = -1;
 int last_level_menu = -1;
 bool btnpress = false;
 int global_sizemenu;
+
+
+extern int MatrizEstado[3][3];
 
 //Calibracion
 extern float M_Base, M_Hombro, M_Codo, M_Pinza;

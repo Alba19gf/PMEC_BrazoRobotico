@@ -8,8 +8,8 @@
 #include "../lib/BotonEmergencia.h"
 #include "../lib/Comunicacion_JSON.cpp"
 #include "../lib/Comunicacion_JSON.h"
-#include "../lib/TresEnRaya.cpp"
-#include "../lib/TresEnRaya.h"
+#include "../lib/TresEnRayaTest.cpp"
+#include "../lib/TresEnRayaTest.h"
 
 
 
