@@ -8,10 +8,23 @@
 
 const int SIZE = 3;
 
-extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar disponible en todo el programa
+int MatrizEstado[SIZE][SIZE]; 
 
-// Declarar la función externa para recibir la matriz de visión
-extern void Fn_MatrizState();
+// // Declarar la función externa para recibir la matriz de visión
+// extern void Fn_MatrizState();
+void setMatrizEstadoPrueba()
+{
+  // Define una matriz de estado de prueba
+  int matrizPrueba[SIZE][SIZE] = {{2, 1, 0}, {0, 1, 0}, {2, 2, 1}};
+  // Copia la matriz de prueba a la MatrizEstado
+  for (int i = 0; i < SIZE; i++)
+  {
+    for (int j = 0; j < SIZE; j++)
+    {
+      MatrizEstado[i][j] = matrizPrueba[i][j];
+    }
+  }
+}
 
 void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
 {
@@ -132,54 +145,10 @@ int mov_optimo()
   return mejor_casilla;
 }
 
-// int PosicionOptima()
-// {
-//   Fn_MatrizState();
-//   // Llamar a la función externa para actualizar MatrizEstado
-//   Serial.println("Matriz en posicion óptima recibida:");
-//   Fn_printMatriz(MatrizEstado);
-
-//   int MatrizMinimax[SIZE][SIZE];
-//   convertir_matrizGlobal(MatrizMinimax); // Llamada para convertir la matriz global
-
-//   // Obtener la posición óptima
-//   int pos_optima = mov_optimo();
-
-//   // Si la posición óptima está entre 0 y 8, retornar esa posición
-//   if (pos_optima >= 0 && pos_optima <= 8)
-//   {
-//     pos_optima = pos_optima + 1;
-//   }
-
-//   // Si no hay movimientos posibles, verificar el resultado del juego
-//   else if (pos_optima == -1)
-//   {
-//     int resultado = comprueba_ganador(MatrizMinimax);
-//     if (resultado == 2)
-//     {
-//       pos_optima = 10; // Empate
-//     }
-//     else if (resultado == 1)
-//     {
-//       pos_optima = 11; // El robot ha ganado
-//     }
-//     else if (resultado == -1)
-//     {
-//       pos_optima = 12; // El humano ha ganado
-//     }
-//   }
-
-//   return pos_optima;
-//}
-
 void setup()
 {
   // Inicializar comunicación serial
   Serial.begin(115200);
-  Fn_MatrizState();
-  // Llamar a la función externa para actualizar MatrizEstado
-  Serial.println("Matriz en posicion óptima recibida:");
-  Fn_printMatriz(MatrizEstado);
 
   int MatrizMinimax[SIZE][SIZE];
   convertir_matrizGlobal(MatrizMinimax); // Llamada para convertir la matriz global
