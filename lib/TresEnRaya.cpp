@@ -133,22 +133,22 @@ int mov_optimo(int MatrizEstado[SIZE][SIZE])
         }
     }
 
-    // Comprobar el resultado y asignar el valor adecuado
-    int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    if (resultadoJuego == 1)
-    {
-        mejor_casilla = 10; // Empate
-    }
-    else if (resultadoJuego == 12)
-    {
-        // El robot ha ganado
-        mejor_casilla = 11;
-    }
-    else if (resultadoJuego == 11)
-    {
-        // El humano ha ganado - perdio robot
-        mejor_casilla = 12;
-    }
+    // // Comprobar el resultado y asignar el valor adecuado
+    // int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
+    // if (resultadoJuego == 1)
+    // {
+    //     mejor_casilla = 10; // Empate
+    // }
+    // else if (resultadoJuego == 12)
+    // {
+    //     // El robot ha ganado
+    //     mejor_casilla = 11;
+    // }
+    // else if (resultadoJuego == 11)
+    // {
+    //     // El humano ha ganado - perdio robot
+    //     mejor_casilla = 12;
+    // }
 
     return mejor_casilla;
 }
