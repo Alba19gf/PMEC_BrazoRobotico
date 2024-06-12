@@ -4,182 +4,173 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h> // Para INT_MIN y INT_MAX
+#include <stdbool.h>
 
-const int SIZE = 3;
-int MatrizEstado[SIZE][SIZE];
+// Definición del tamaño del tablero
+#define N 3
 
-void setMatrizEstadoPrueba()
-{
-  // Define una matriz de estado de prueba
-  int matrizPrueba[SIZE][SIZE] = {{2, 1, 0}, {0, 1, 0}, {2, 2, 1}};
-  // Copia la matriz de prueba a la MatrizEstado
-  for (int i = 0; i < SIZE; i++)
-  {
-    for (int j = 0; j < SIZE; j++)
-    {
-      MatrizEstado[i][j] = matrizPrueba[i][j];
-    }
-  }
-}
+// Función para comprobar el ganador y si hay empate
+void compruebaGanador(int MatrizEstadoNuevo[N][N], int *ganador, bool *empate) {
+    int combinaciones[8][3] = {
+        {0, 1, 2}, {3, 4, 5}, {6, 7, 8},  // filas
+        {0, 3, 6}, {1, 4, 7}, {2, 5, 8},  // columnas
+        {0, 4, 8}, {2, 4, 6}              // diagonales
+    };
 
-void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE])
-{
-  Serial.println("Convirtiendo matriz de estado Global");
+    *ganador = 0;
+    *empate = true;
 
-  for (int i = 0; i < SIZE; i++)
-  {
-    for (int j = 0; j < SIZE; j++)
-    {
-      if (MatrizEstado[i][j] == 2)
-        MatrizEstadoNuevo[i][j] = 0; // CASILLAS VACÍAS se convierten a 0
-      else if (MatrizEstado[i][j] == 0)
-        MatrizEstadoNuevo[i][j] = -1; // Cambia de representación 0 a -1 JUGADOR HUMANO
-      else
-        MatrizEstadoNuevo[i][j] = 1; // Los demás valores se mantienen como 1 JUGADOR ROBOT
-    }
-  }
-}
+    for (int i = 0; i < 8; ++i) {
+        int a = combinaciones[i][0];
+        int b = combinaciones[i][1];
+        int c = combinaciones[i][2];
 
-int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE])
-{
-  int combinaciones[8][3][2] = {
-      {{0, 0}, {0, 1}, {0, 2}}, {{1, 0}, {1, 1}, {1, 2}}, {{2, 0}, {2, 1}, {2, 2}}, // Combinaciones para filas
-      {{0, 0}, {1, 0}, {2, 0}},
-      {{0, 1}, {1, 1}, {2, 1}},
-      {{0, 2}, {1, 2}, {2, 2}}, // Combinaciones para columnas
-      {{0, 0}, {1, 1}, {2, 2}},
-      {{0, 2}, {1, 1}, {2, 0}} // Combinaciones para diagonales
-  };
+        if (MatrizEstadoNuevo[a / N][a % N] == MatrizEstadoNuevo[b / N][b % N] &&
+            MatrizEstadoNuevo[b / N][b % N] == MatrizEstadoNuevo[c / N][c % N] &&
+            MatrizEstadoNuevo[a / N][a % N] != 0) {
 
-  for (int i = 0; i < 8; i++)
-  {
-    int a = combinaciones[i][0][0], b = combinaciones[i][0][1];
-    int c = combinaciones[i][1][0], d = combinaciones[i][1][1];
-    int e = combinaciones[i][2][0], f = combinaciones[i][2][1];
-
-    if (MatrizEstadoNuevo[a][b] != 0 && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[c][d] && MatrizEstadoNuevo[a][b] == MatrizEstadoNuevo[e][f])
-    {
-      return MatrizEstadoNuevo[a][b]; // Devuelve 1 si gana el robot, -1 si gana el humano
-    }
-  }
-
-  for (int i = 0; i < SIZE; i++)
-  {
-    for (int j = 0; j < SIZE; j++)
-    {
-      if (MatrizEstadoNuevo[i][j] == 0)
-      {
-        return 0; // No es empate si hay un espacio vacío
-      }
-    }
-  }
-
-  return 2; // Si no hay ganador y no hay espacios vacíos, es empate
-}
-
-int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax)
-{
-  int ganador = comprueba_ganador(MatrizEstadoNuevo);
-
-  if (ganador == 1)
-    return 100 - prof; // Robot gana
-  if (ganador == -1)
-    return -100 + prof; // Jugador humano gana
-  if (ganador == 2)     // Empate
-    return 0;
-
-  if (isMax)
-  {
-    int mejorPuntuacion = INT_MIN;
-    for (int i = 0; i < SIZE; i++)
-    {
-      for (int j = 0; j < SIZE; j++)
-      {
-        if (MatrizEstadoNuevo[i][j] == 0)
-        {
-          MatrizEstadoNuevo[i][j] = 1;
-          int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, false);
-          MatrizEstadoNuevo[i][j] = 0;
-          mejorPuntuacion = max(mejorPuntuacion, puntuacion);
+            *ganador = MatrizEstadoNuevo[a / N][a % N];
+            *empate = false;
+            return;
         }
-      }
-    }
-    return mejorPuntuacion;
-  }
-  else
-  {
-    int mejorPuntuacion = INT_MAX;
-    for (int i = 0; i < SIZE; i++)
-    {
-      for (int j = 0; j < SIZE; j++)
-      {
-        if (MatrizEstadoNuevo[i][j] == 0)
-        {
-          MatrizEstadoNuevo[i][j] = -1;
-          int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, true);
-          MatrizEstadoNuevo[i][j] = 0;
-          mejorPuntuacion = min(mejorPuntuacion, puntuacion);
+
+        if (MatrizEstadoNuevo[a / N][a % N] == 0 || MatrizEstadoNuevo[b / N][b % N] == 0 ||
+            MatrizEstadoNuevo[c / N][c % N] == 0) {
+            *empate = false;
         }
-      }
     }
-    return mejorPuntuacion;
-  }
 }
 
-int mov_optimo()
-{
-  int MatrizEstadoNuevo[SIZE][SIZE];
-  convertir_matrizGlobal(MatrizEstadoNuevo);
+// Función minimax recursiva
+int minimax(int MatrizEstadoNuevo[N][N], int prof, bool isMax) {
+    int ganador;
+    bool empate;
+    compruebaGanador(MatrizEstadoNuevo, &ganador, &empate);
 
-  int mejor_puntuacion = INT_MIN;
-  int mejor_casilla = -1;
+    if (ganador == 1) {
+        return 100 - prof; // Robot gana
+    } else if (ganador == -1) {
+        return -100 + prof; // Jugador humano gana
+    } else if (empate) {
+        return 0; // Empate
+    }
 
-  for (int i = 0; i < SIZE; i++)
-  {
-    for (int j = 0; j < SIZE; j++)
-    {
-      if (MatrizEstadoNuevo[i][j] == 0)
-      {
-        MatrizEstadoNuevo[i][j] = 1;
+    int mejorPuntuacion = isMax ? -1000 : 1000;
+
+    for (int i = 0; i < N * N; ++i) {
+        int row = i / N;
+        int col = i % N;
+
+        if (MatrizEstadoNuevo[row][col] == 0) {
+            MatrizEstadoNuevo[row][col] = isMax ? 1 : -1;
+            int puntuacion = minimax(MatrizEstadoNuevo, prof + 1, !isMax);
+            MatrizEstadoNuevo[row][col] = 0;
+
+            if (isMax && puntuacion > mejorPuntuacion) {
+                mejorPuntuacion = puntuacion;
+            } else if (!isMax && puntuacion < mejorPuntuacion) {
+                mejorPuntuacion = puntuacion;
+            }
+        }
+    }
+
+    return mejorPuntuacion;
+}
+
+// Función para encontrar la mejor posición y resultado
+void movOptimo(int MatrizEstadoNuevo[N][N], int *pos_optima, int *resultado) {
+    int casillas_disponibles[N * N];
+    int num_disponibles = 0;
+
+    for (int i = 0; i < N * N; ++i) {
+        int row = i / N;
+        int col = i % N;
+
+        if (MatrizEstadoNuevo[row][col] == 0) {
+            casillas_disponibles[num_disponibles++] = i;
+        }
+    }
+
+    int mejor_puntuacion = -1000;
+    *pos_optima = -1;
+
+    for (int i = 0; i < num_disponibles; ++i) {
+        int row = casillas_disponibles[i] / N;
+        int col = casillas_disponibles[i] % N;
+
+        MatrizEstadoNuevo[row][col] = 1;
         int puntuacion = minimax(MatrizEstadoNuevo, 0, false);
-        MatrizEstadoNuevo[i][j] = 0;
+        MatrizEstadoNuevo[row][col] = 0;
 
-        if (puntuacion > mejor_puntuacion)
-        {
-          mejor_puntuacion = puntuacion;
-          mejor_casilla = i * SIZE + j; // Calcular la posición óptima
+        if (puntuacion > mejor_puntuacion) {
+            mejor_puntuacion = puntuacion;
+            *pos_optima = casillas_disponibles[i];
         }
-      }
     }
-  }
 
-  return mejor_casilla;
+    MatrizEstadoNuevo[*pos_optima / N][*pos_optima % N] = 1;
+    int ganador;
+    bool empate;
+    compruebaGanador(MatrizEstadoNuevo, &ganador, &empate);
+
+    if (ganador == 1) {
+        *resultado = 11; // Robot ha ganado
+    } else if (ganador == -1) {
+        *resultado = 12; // Humano ha ganado
+    } else if (empate) {
+        *resultado = 13; // Empate
+    } else {
+        *resultado = 0; // No hay resultado definitivo
+    }
 }
 
-void setup()
-{
-  // Inicializar comunicación serial
-  Serial.begin(115200);
+// Función para convertir el tablero
+void convertir_tablero(int MatrizEstado[N][N], int MatrizEstadoNuevo[N][N]) {
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            if (MatrizEstado[i][j] == 2) {
+                MatrizEstadoNuevo[i][j] = 0; // Casilla vacía
+            } else if (MatrizEstado[i][j] == 0) {
+                MatrizEstadoNuevo[i][j] = -1; // Casilla con O (jugador humano)
+            } else if (MatrizEstado[i][j] == 1) {
+                MatrizEstadoNuevo[i][j] = 1; // Casilla con X (robot)
+            }
+        }
+    }
+}
 
-  setMatrizEstadoPrueba();
-  int MatrizEstadoNuevo[SIZE][SIZE];
-  convertir_matrizGlobal(MatrizEstadoNuevo);
-  int resultado = comprueba_ganador(MatrizEstadoNuevo);
-  Serial.print("El resultado del juego es: ");
-  if (resultado == 1)
-  {
-    Serial.println("El robot ha ganado.");
-  }
-  else if (resultado == -1)
-  {
-    Serial.println("El humano ha ganado.");
-  }
-  else if (resultado == 2)
-  {
-    Serial.println("Es un empate.");
-  }
-  else
-  {
-    Serial.println("El juego sigue en curso.");
-  }
+int main() {
+    int MatrizEstado[N][N] = {
+        {1, 2, 2},
+        {0, 1, 2},
+        {0, 2, 2}
+    };
+
+    int MatrizEstadoNuevo[N][N];
+    convertir_tablero(MatrizEstado, MatrizEstadoNuevo);
+
+    // Mostrar el tablero convertido
+    printf("MatrizEstadoNuevo:\n");
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            printf("%d ", MatrizEstadoNuevo[i][j]);
+        }
+        printf("\n");
+    }
+
+    int pos_optima, resultado;
+    movOptimo(MatrizEstadoNuevo, &pos_optima, &resultado);
+
+    // Mostrar el resultado
+    if (resultado == 11) {
+        printf("El robot ha ganado.\n");
+    } else if (resultado == 12) {
+        printf("El jugador humano ha ganado.\n");
+    } else if (resultado == 13) {
+        printf("El juego ha terminado en empate.\n");
+    } else {
+        printf("La máquina debe hacer su próximo movimiento en la casilla %d.\n", pos_optima + 1);
+    }
+
+    return 0;
 }
