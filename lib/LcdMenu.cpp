@@ -52,14 +52,19 @@ void fn_menu1(byte pos, String menus[], byte sizemenu, String titulo) {
     lcd.write(byte(0));
 
     for (int i = 0; i < sizemenu; i++) {
-        int col = (i / 3) * 4 + 1;
-        int row = i % 3 + 1;
+        col = (i / 3) * 4 + 1;
+        row = i % 3 + 1;
         lcd.setCursor(col, row);
         lcd.print(menus[i]);
     }
+
+    global_position = pos + 1; // Actualiza la posición global
+    Serial.println("Manual robot: "+String(global_position ));
+
     if (contador >= sizemenu) contador = 0;
     if (contador < 0) contador = sizemenu - 1;
 }
+
 
 
 //Funcion para la calibracion de los motores
@@ -243,6 +248,9 @@ void Modo_Manual_Trobot() {
     if (EmergencyPressed) {
       return; // Detener todas las acciones si el botón de emergencia está presionado
     }
+
+    cont=rotaryEncoder.readEncoder() + 1;
+
 
     if (rotaryEncoder.isEncoderButtonClicked()) {
 
@@ -488,7 +496,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 1");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5; 
@@ -498,7 +506,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 2");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5;  
@@ -508,7 +516,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 3");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5; 
@@ -518,7 +526,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 4");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5;  
@@ -528,7 +536,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 5");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot(); 
             contador = 0;
             level_menu = 5; 
@@ -538,7 +546,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 6");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5; 
@@ -548,7 +556,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 7");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot(); 
             contador = 0;
             level_menu = 5; 
@@ -558,7 +566,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 8");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5; 
@@ -568,7 +576,7 @@ void Robot_Menu() {
             lcd.setCursor(0, 0);
             lcd.print("TURNO ROBOT"); 
             lcd.setCursor(0, 1); 
-            lcd.print("Posicion 9");
+            lcd.print("Posicion " + String(global_position));
             Modo_Manual_Trobot();
             contador = 0;
             level_menu = 5; 
@@ -580,6 +588,8 @@ void Robot_Menu() {
             //digitalWrite(LED_ROJO, LOW);
             break;
         }
+        
+        final_position = global_position;
         break;
 
       case 7: //===============================================================================menu etsado

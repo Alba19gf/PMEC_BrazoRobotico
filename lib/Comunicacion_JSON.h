@@ -9,9 +9,11 @@
 
 //int MatrizEstado[3][3]; // Matriz de estado global
 extern int MatrizEstado[3][3];
-const char* ssid = "ESP_3DEYE";
-const char* password = "holahola";
-const char* host = "192.168.4.2"; // Cambia esto por la IP de tu servidor MATLAB
+//const char* ssid = "ESP_3DEYE";
+//const char* password = "holahola";
+const char* ssid = "MIM-UNIOVI";
+const char* password = "mimuniovi2018";
+const char* host = "192.168.4.3"; // Cambia esto por la IP de tu servidor MATLAB
 const uint16_t port = 55000;
 
 WiFiClient client;

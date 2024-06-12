@@ -37,6 +37,9 @@ int global_sizemenu;
 //Calibracion
 extern float M_Base, M_Hombro, M_Codo, M_Pinza;
 
+extern int global_position; // Variable global para almacenar la posición seleccionada
+extern int final_position;
+
 //-------------------MENU-------------------//
 String menu1[] = { "Calibracion", "M.Automatico", "M.Manual", "Comunicacion"};  //Inicializamos nuestro Array con los elementos del menu princiapl
 int sizemenu1 = sizeof(menu1) / sizeof(menu1[0]); 
