@@ -147,37 +147,60 @@ int PosicionOptima()
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
     // Obtener la posición óptima
-    return mov_optimo(MatrizEstadoNuevo); //En caso de haber un ganador o empate, mov=optimo=-1
+    return mov_optimo(MatrizEstadoNuevo); //De 0 a 8\ En caso de haber un ganador o empate, mov=optimo=-1
+    if (mov_optimo== -1)
+        {
+            int mov_optimo = comprueba_ganador(MatrizEstadoNuevo);
+            if (mov_optimo == 2)
+            {
+                mov_optimo = 12; // Empate
+            }
+            else if (mov_optimo == 1)
+            {
+                mov_optimo = 11; // El robot ha ganado
+            }
+            else if (mov_optimo == -1)
+            {
+                mov_optimo = 10; // El humano ha ganado
+            }
+            else if (mov_optimo == 0)
+            {
+                mov_optimo = 9; // El juego no ha terminado
+            }
+
+            return mov_optimo;
+        }
+    
 }
 
-int ResultadoJuego()
-{
-    // Llamar a la función externa para actualizar MatrizEstado
-    int MatrizEstado[SIZE][SIZE];
-    Fn_MatrizState();
+// int ResultadoJuego()
+// {
+//     // Llamar a la función externa para actualizar MatrizEstado
+//     int MatrizEstado[SIZE][SIZE];
+//     Fn_MatrizState();
 
-    // Convertir MatrizEstado a MatrizEstadoNuevo
-    int MatrizEstadoNuevo[SIZE][SIZE];
-    convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
+//     // Convertir MatrizEstado a MatrizEstadoNuevo
+//     int MatrizEstadoNuevo[SIZE][SIZE];
+//     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
-    // Comprobar el resultado y asignar el valor adecuado
-    int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    if (resultadoJuego == 2)
-    {
-        resultadoJuego = 13; // Empate
-    }
-    else if (resultadoJuego == 1)
-    {
-        resultadoJuego = 12; // El robot ha ganado
-    }
-    else if (resultadoJuego == -1)
-    {
-        resultadoJuego = 11; // El humano ha ganado
-    }
-    else if (resultadoJuego == 0)
-    {
-        resultadoJuego = 10; // El juego no ha terminado
-    }
+//     // Comprobar el resultado y asignar el valor adecuado
+//     int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
+//     if (resultadoJuego == 2)
+//     {
+//         resultadoJuego = 13; // Empate
+//     }
+//     else if (resultadoJuego == 1)
+//     {
+//         resultadoJuego = 12; // El robot ha ganado
+//     }
+//     else if (resultadoJuego == -1)
+//     {
+//         resultadoJuego = 11; // El humano ha ganado
+//     }
+//     else if (resultadoJuego == 0)
+//     {
+//         resultadoJuego = 10; // El juego no ha terminado
+//     }
 
-    return resultadoJuego;
-}
+//     return resultadoJuego;
+// }
