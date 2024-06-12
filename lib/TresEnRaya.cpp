@@ -147,7 +147,7 @@ int PosicionOptima()
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
     // Obtener la posición óptima
-    return mov_optimo(MatrizEstadoNuevo);
+    return mov_optimo(MatrizEstadoNuevo); //En caso de haber un ganador o empate, mov=optimo=-1
 }
 
 int ResultadoJuego()
