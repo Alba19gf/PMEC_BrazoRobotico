@@ -104,3 +104,14 @@ void Inicializar_COMS(){
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 }
+
+void Fn_printMatriz(int matriz[3][3]){
+  Serial.println("Loop:");
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        Serial.print(matriz[i][j]);
+         Serial.print(" ");
+      }
+      Serial.println();
+    }
+}

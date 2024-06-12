@@ -37,20 +37,14 @@ void loop()
 
   if (buttonState == LOW) { // Si el botón es presionado
      Fn_MatrizState(); // Llamamos a la función MatrizState y almacenamos el resultado en MatrizEstado
-     Serial.println("Loop:");
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        Serial.print(MatrizEstado[i][j]);
-         Serial.print(" ");
-      }
-      Serial.println();
-    }
+     
   }
  // Serial.println(EmergencyPressed);
 
  if(EmergencyPressed)
  {
   Serial.print("Emergency stop");
+  Fn_printMatriz(MatrizEstado);
  }
 
 }

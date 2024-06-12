@@ -141,7 +141,8 @@ void Modo_Automatico_Trobot() {
       return; // Detener todas las acciones si el botón de emergencia está presionado
     }
 
-    int valor = ejecutarJuegoSerial();
+    //int valor = ejecutarJuegoSerial();
+    int valor=mov_optimo();
 
     if (valor<=9)
     {
@@ -159,13 +160,13 @@ void Modo_Automatico_Trobot() {
     else if (valor==11){
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("GANO ROBOT");
+      lcd.print("PERDISTE!");
       return;
     }
     else if (valor==12){
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("PERDISTE");
+      lcd.print("GANASTE!");
       return;
     }
 
