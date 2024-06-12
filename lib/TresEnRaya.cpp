@@ -158,52 +158,54 @@ int PosicionOptima()
     // Si no hay movimientos posibles, verificar el resultado del juego
     if (pos_optima == -1)
     {
-        pos_optima = comprueba_ganador(MatrizEstadoNuevo);
-        if (pos_optima == 2)
+        if (pos_optima == -1)
         {
-            return 9; // Empate
+            int resultado = comprueba_ganador(MatrizEstadoNuevo);
+            if (resultado == 2)
+            {
+                pos_optima = 9; // Empate
+            }
+            else if (resultado == 1)
+            {
+                pos_optima = 10; // El robot ha ganado
+            }
+            else if (resultado == -1)
+            {
+                pos_optima = 11; // El humano ha ganado
+            }
         }
-        else if (pos_optima == 1)
-        {
-            return 10; // El robot ha ganado
-        }
-        else if (pos_optima == -1)
-        {
-            return 11; // El humano ha ganado
-        }
+
+        return pos_optima;
     }
 
-    return pos_optima;
-}
+    // int ResultadoJuego()
+    // {
+    //     // Llamar a la función externa para actualizar MatrizEstado
+    //     int MatrizEstado[SIZE][SIZE];
+    //     Fn_MatrizState();
 
-// int ResultadoJuego()
-// {
-//     // Llamar a la función externa para actualizar MatrizEstado
-//     int MatrizEstado[SIZE][SIZE];
-//     Fn_MatrizState();
+    //     // Convertir MatrizEstado a MatrizEstadoNuevo
+    //     int MatrizEstadoNuevo[SIZE][SIZE];
+    //     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
-//     // Convertir MatrizEstado a MatrizEstadoNuevo
-//     int MatrizEstadoNuevo[SIZE][SIZE];
-//     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
+    //     // Comprobar el resultado y asignar el valor adecuado
+    //     int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
+    //     if (resultadoJuego == 2)
+    //     {
+    //         resultadoJuego = 13; // Empate
+    //     }
+    //     else if (resultadoJuego == 1)
+    //     {
+    //         resultadoJuego = 12; // El robot ha ganado
+    //     }
+    //     else if (resultadoJuego == -1)
+    //     {
+    //         resultadoJuego = 11; // El humano ha ganado
+    //     }
+    //     else if (resultadoJuego == 0)
+    //     {
+    //         resultadoJuego = 10; // El juego no ha terminado
+    //     }
 
-//     // Comprobar el resultado y asignar el valor adecuado
-//     int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-//     if (resultadoJuego == 2)
-//     {
-//         resultadoJuego = 13; // Empate
-//     }
-//     else if (resultadoJuego == 1)
-//     {
-//         resultadoJuego = 12; // El robot ha ganado
-//     }
-//     else if (resultadoJuego == -1)
-//     {
-//         resultadoJuego = 11; // El humano ha ganado
-//     }
-//     else if (resultadoJuego == 0)
-//     {
-//         resultadoJuego = 10; // El juego no ha terminado
-//     }
-
-//     return resultadoJuego;
-// }
+    //     return resultadoJuego;
+    // }
