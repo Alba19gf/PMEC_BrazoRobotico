@@ -6,6 +6,8 @@ Servo motorPinza;
 
 void Modo_Automatico_Trobot();
 void Modo_Automatico_Tusuario();
+void Modo_Manual_Trobot();
+void Modo_Manual_Tusuario();
 
 
 int ejecutarJuegoSerial() {
@@ -147,7 +149,8 @@ void Modo_Automatico_Trobot() {
     }
 
     //int valor = ejecutarJuegoSerial();
-    int valor = ComputadoraMovimiento();
+    int valor = ComputadoraMovimiento();  // funcion de 3 en raya basico
+    
     Serial.println(valor);
     
 
@@ -162,18 +165,21 @@ void Modo_Automatico_Trobot() {
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("JUEGO EMPATADO");
+      Serial.println("JUEGO EMPATADO");
       return;
     }
     else if (valor==11){
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("PERDISTE!");
+      Serial.println("GANO ROBOT");
       return;
     }
     else if (valor==12){
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("GANASTE!");
+      Serial.println("GANO USUARIO");
       return;
     }
 
@@ -224,6 +230,12 @@ void Modo_Automatico_Tusuario() {
 
 //Funcion para salir presionando el boton del modo manual turno usuario
 void Modo_Manual_Tusuario(){
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TURNO USUARIO");
+  lcd.setCursor(0, 1);
+  lcd.print("Mueve una ficha");
+
   while (true) {
 
     if (EmergencyPressed) {
@@ -235,11 +247,20 @@ void Modo_Manual_Tusuario(){
       //static unsigned long lastTimePressed = 0; // Soft debouncing
       if (millis() - lastTimePressed >= 500) {
         Serial.print("button pressed soft");
-        
+        Modo_Manual_Trobot();
         lastTimePressed = millis();
         return;
       }
     }
+  }
+}
+
+void ComandoMovimiento(int position)
+{
+  if (position < 10 && position != final_position)
+  {
+    Serial.println("Move to position: " + String(position));
+    final_position = position;
   }
 }
 
@@ -261,6 +282,7 @@ void Modo_Manual_Trobot() {
         Serial.print("button pressed soft");
         
         lastTimePressed = millis();
+        Modo_Manual_Tusuario();
         return;
       }
     }
@@ -276,6 +298,19 @@ void Modo_Manual_Trobot() {
   }
   contador=0;
   level_menu=6;
+}
+
+void PosicionManual()
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TURNO ROBOT");                 
+  lcd.setCursor(0, 1); 
+  lcd.print("Posicion " + String(global_position));
+  ComandoMovimiento(global_position);
+  Modo_Manual_Trobot();
+  contador = 0;
+  level_menu = 5; 
 }
 
 //Funcion para manejar los menus y submenus de la interfaz
@@ -462,14 +497,9 @@ void Robot_Menu() {
         }
         break;
 
-      case 5: // SubMenu Empezar del Modo Manual
+case 5: // SubMenu Empezar del Modo Manual
         switch (contador) {
           case 0: // T. Usuario
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO USUARIO");
-            lcd.setCursor(0, 1);
-            lcd.print("Mueve una ficha");
             Modo_Manual_Tusuario();
             contador = 0;
             level_menu = 6;
@@ -494,94 +524,31 @@ void Robot_Menu() {
       case 6: // SubMenu T.ROBOT Modo Manual
         switch (contador) {
           case 0: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 1: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5;  
+            PosicionManual();
             break;
           case 2:
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 3: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5;  
+            PosicionManual();
             break;
           case 4: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot(); 
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 5: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 6: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot(); 
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 7: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 8: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion " + String(global_position));
-            Modo_Manual_Trobot();
-            contador = 0;
-            level_menu = 5; 
+            PosicionManual();
             break;
           case 9:
             contador = 1;
@@ -590,7 +557,7 @@ void Robot_Menu() {
             //digitalWrite(LED_ROJO, LOW);
             break;
         }
-        
+
         final_position = global_position;
         break;
 

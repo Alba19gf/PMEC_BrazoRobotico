@@ -40,8 +40,8 @@ extern int MatrizEstado[3][3];
 //Calibracion
 extern float M_Base, M_Hombro, M_Codo, M_Pinza;
 
-extern int global_position; // Variable global para almacenar la posición seleccionada
-extern int final_position;
+extern int global_position; //Variable para recorrer la posicion de 1 a 9 en el modo manual Turno robot
+extern int final_position; //Variable global para guardar almacenar la posición seleccionada en el modo manual Turno robot
 
 //-------------------MENU-------------------//
 String menu1[] = { "Calibracion", "M.Automatico", "M.Manual", "Comunicacion"};  //Inicializamos nuestro Array con los elementos del menu princiapl

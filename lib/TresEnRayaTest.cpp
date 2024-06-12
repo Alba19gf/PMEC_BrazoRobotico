@@ -98,6 +98,7 @@ int ComputadoraMovimiento() {
     if (result != 0) return result;
     
     int bestMove = findBestMove(MatrizEstado);
+    Serial.println(bestMove);
     
     return bestMove;
 }
