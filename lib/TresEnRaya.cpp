@@ -113,10 +113,8 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax)
 
 int mov_optimo()
 {
-
     int MatrizEstadoNuevo[SIZE][SIZE];
-
-    MatrizEstadoNuevo[SIZE][SIZE] = convertir_matrizGlobal();
+    convertir_matrizGlobal(MatrizEstadoNuevo);
     Serial.println("Matriz convertida a Minimax, en mov optimo");
     Fn_printMatriz(MatrizEstadoNuevo);
 
@@ -130,7 +128,7 @@ int mov_optimo()
             if (MatrizEstadoNuevo[i][j] == 0)
             {
                 MatrizEstadoNuevo[i][j] = 1;
-                int puntuacion = minimax(MatrizEstadoNuevo, 0, 0);
+                int puntuacion = minimax(MatrizEstadoNuevo, 0, false);
                 MatrizEstadoNuevo[i][j] = 0;
 
                 if (puntuacion > mejor_puntuacion)
@@ -144,7 +142,6 @@ int mov_optimo()
 
     return mejor_casilla;
 }
-
 int PosicionOptima()
 {
     Fn_MatrizState();
