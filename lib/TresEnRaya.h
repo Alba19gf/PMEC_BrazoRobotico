@@ -10,6 +10,7 @@
 extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar disponible en todo el programa
 
 
+void Fn_MatrizState();// Función para actualizar el estado de la matriz
 void Fn_printMatriz(int MatrizEstadoNuevo[SIZE][SIZE]);
 int convertir_matrizGlobal(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]);
 
