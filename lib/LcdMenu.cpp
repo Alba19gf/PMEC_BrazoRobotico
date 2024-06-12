@@ -146,8 +146,8 @@ void Modo_Automatico_Trobot() {
       return; // Detener todas las acciones si el botón de emergencia está presionado
     }
 
-    //int valor = ejecutarJuegoSerial();
-    int valor=mov_optimo();
+    int valor = ejecutarJuegoSerial();
+    //int valor=mov_optimo();
 
     if (valor<=9)
     {

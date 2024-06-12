@@ -12,6 +12,7 @@
 #include "../lib/TresEnRaya.h"
 
 
+
 int MatrizEstado[3][3]; // Matriz de estado global
 const int buttonPin = 15; // Pin del botón
 int buttonState = 0;
