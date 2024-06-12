@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <limits.h>
-#define SIZE 3
-// const int SIZE = 3;
+//#define SIZE 3
+const int SIZE = 3;
 
 extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar disponible en todo el programa
 
