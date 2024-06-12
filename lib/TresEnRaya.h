@@ -12,7 +12,7 @@ extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar
 
 void Fn_MatrizState();// Función para actualizar el estado de la matriz
 void Fn_printMatriz(int MatrizEstadoNuevo[SIZE][SIZE]);
-int convertir_matrizGlobal(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE]);
+void convertir_matrizGlobal(int MatrizEstadoNuevo[SIZE][SIZE]);
 
 int comprueba_ganador(int MatrizEstadoNuevo[SIZE][SIZE]);
 int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, bool isMax);
