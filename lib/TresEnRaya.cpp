@@ -1,17 +1,10 @@
 // TresEnRaya.cpp
 #include "TresEnRaya.h"
 
-<<<<<<< HEAD
-
-// MatrizEstado global
-extern int MatrizEstado[SIZE][SIZE];
-
-=======
 void Fn_MatrizState()
 {
     // Aquí se debe actualizar la matrizEstado desde la fuente externa
 }
->>>>>>> 98e25fa0f1f27527fa73d7c52cfa766e4f16c438
 
 void convertir_matriz(int MatrizEstado[SIZE][SIZE], int MatrizEstadoNuevo[SIZE][SIZE])
 {
@@ -113,12 +106,8 @@ int minimax(int MatrizEstadoNuevo[SIZE][SIZE], int prof, int isMax)
     }
 }
 
-<<<<<<< HEAD
-int mov_optimo() {
-=======
 int mov_optimo(int MatrizEstado[SIZE][SIZE])
 {
->>>>>>> 98e25fa0f1f27527fa73d7c52cfa766e4f16c438
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
@@ -146,12 +135,17 @@ int mov_optimo(int MatrizEstado[SIZE][SIZE])
 
     // Comprobar el resultado y asignar el valor adecuado
     int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    if (resultadoJuego == 1) {
+    if (resultadoJuego == 1)
+    {
         mejor_casilla = 10; // Empate
-    } else if (resultadoJuego == 12) {
+    }
+    else if (resultadoJuego == 12)
+    {
         // El robot ha ganado
         mejor_casilla = 11;
-    } else if (resultadoJuego == 11) {
+    }
+    else if (resultadoJuego == 11)
+    {
         // El humano ha ganado - perdio robot
         mejor_casilla = 12;
     }
@@ -159,29 +153,9 @@ int mov_optimo(int MatrizEstado[SIZE][SIZE])
     return mejor_casilla;
 }
 
-<<<<<<< HEAD
-
-//int PosicionOptima() {
-=======
 int PosicionOptima()
 {
->>>>>>> 98e25fa0f1f27527fa73d7c52cfa766e4f16c438
     // Llamar a la función externa para actualizar MatrizEstado
-    //int MatrizEstado[SIZE][SIZE];
-    //Fn_MatrizState();
-
-    // Convertir MatrizEstado a MatrizEstadoNuevo
-    //int MatrizEstadoNuevo[SIZE][SIZE];
-   // convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
-
-    // Obtener la posición óptima
-<<<<<<< HEAD
- //   return mov_optimo;
-//}
-
-int ResultadoJuego() {
-    // Llamar a la función externa para actualizar MatrizEstado
-    int resultado = -1;
     int MatrizEstado[SIZE][SIZE];
     Fn_MatrizState();
 
@@ -189,21 +163,7 @@ int ResultadoJuego() {
     int MatrizEstadoNuevo[SIZE][SIZE];
     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
 
-    // Comprobar el resultado y asignar el valor adecuado
-    int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    if (resultadoJuego == 1) {
-        resultado = 10; // Empate
-    } else if (resultadoJuego == 12) {
-        // El robot ha ganado
-        resultado = 11;
-    } else if (resultadoJuego == 11) {
-        // El humano ha ganado - perdio robot
-        resultado = 12;
-    }
-
-    return resultado;
-}
-=======
+    // Obtener la posición óptima
     int pos_optima = mov_optimo(MatrizEstadoNuevo);
 
     // Si la posición óptima está entre 0 y 8, retornar esa posición
@@ -234,36 +194,5 @@ int ResultadoJuego() {
 
         return pos_optima;
     }
-
-    // int ResultadoJuego()
-    // {
-    //     // Llamar a la función externa para actualizar MatrizEstado
-    //     int MatrizEstado[SIZE][SIZE];
-    //     Fn_MatrizState();
-
-    //     // Convertir MatrizEstado a MatrizEstadoNuevo
-    //     int MatrizEstadoNuevo[SIZE][SIZE];
-    //     convertir_matriz(MatrizEstado, MatrizEstadoNuevo);
-
-    //     // Comprobar el resultado y asignar el valor adecuado
-    //     int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    //     if (resultadoJuego == 2)
-    //     {
-    //         resultadoJuego = 13; // Empate
-    //     }
-    //     else if (resultadoJuego == 1)
-    //     {
-    //         resultadoJuego = 12; // El robot ha ganado
-    //     }
-    //     else if (resultadoJuego == -1)
-    //     {
-    //         resultadoJuego = 11; // El humano ha ganado
-    //     }
-    //     else if (resultadoJuego == 0)
-    //     {
-    //         resultadoJuego = 10; // El juego no ha terminado
-    //     }
-
-    //     return resultadoJuego;
-    // }
->>>>>>> 98e25fa0f1f27527fa73d7c52cfa766e4f16c438
+}
+   
