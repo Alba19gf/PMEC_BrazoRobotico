@@ -6,10 +6,9 @@
 #include <stdio.h>
 #include <limits.h> // Para INT_MIN y INT_MAX
 
-#define SIZE 3 // Definir tablero de 3x3
+const int SIZE = 3;
 
-// Declarar la matriz global ENTRADA DE VISION
-int MatrizEstado[SIZE][SIZE];
+extern int MatrizEstado[SIZE][SIZE]; //MatrizEstado se declara extern para estar disponible en todo el programa
 
 // Declarar la función externa para recibir la matriz de visión
 extern void Fn_MatrizState();
