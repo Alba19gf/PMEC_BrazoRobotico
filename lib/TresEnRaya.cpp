@@ -169,7 +169,7 @@ int PosicionOptima()
     // Si la posición óptima está entre 0 y 8, retornar esa posición
     if (pos_optima >= 0 && pos_optima <= 8)
     {
-        return pos_optima;
+        return pos_optima +1;
     }
 
     // Si no hay movimientos posibles, verificar el resultado del juego
@@ -180,15 +180,15 @@ int PosicionOptima()
             int resultado = comprueba_ganador(MatrizEstadoNuevo);
             if (resultado == 2)
             {
-                pos_optima = 9; // Empate
+                pos_optima = 10; // Empate
             }
             else if (resultado == 1)
             {
-                pos_optima = 10; // El robot ha ganado
+                pos_optima = 11; // El robot ha ganado
             }
             else if (resultado == -1)
             {
-                pos_optima = 11; // El humano ha ganado
+                pos_optima = 12; // El humano ha ganado
             }
         }
 
