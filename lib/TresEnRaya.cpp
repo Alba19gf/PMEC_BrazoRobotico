@@ -133,23 +133,6 @@ int mov_optimo(int MatrizEstado[SIZE][SIZE])
         }
     }
 
-    // // Comprobar el resultado y asignar el valor adecuado
-    // int resultadoJuego = comprueba_ganador(MatrizEstadoNuevo);
-    // if (resultadoJuego == 1)
-    // {
-    //     mejor_casilla = 10; // Empate
-    // }
-    // else if (resultadoJuego == 12)
-    // {
-    //     // El robot ha ganado
-    //     mejor_casilla = 11;
-    // }
-    // else if (resultadoJuego == 11)
-    // {
-    //     // El humano ha ganado - perdio robot
-    //     mejor_casilla = 12;
-    // }
-
     return mejor_casilla;
 }
 
@@ -169,7 +152,7 @@ int PosicionOptima()
     // Si la posición óptima está entre 0 y 8, retornar esa posición
     if (pos_optima >= 0 && pos_optima <= 8)
     {
-        return pos_optima +1;
+        return pos_optima + 1;
     }
 
     // Si no hay movimientos posibles, verificar el resultado del juego
@@ -194,5 +177,7 @@ int PosicionOptima()
 
         return pos_optima;
     }
+
+    // Por si acaso
+    return -1;
 }
-   
