@@ -164,19 +164,18 @@ void convertir_tablero(int MatrizEstado[N][N], int MatrizEstadoNuevo[N][N])
         }
     }
 }
-#include "tic_tac_toe.h"
 
 int PosicionOptima()
 {
     Fn_MatrizState(); // Si es necesario, llama a esta función para actualizar MatrizEstado
-    Serial.println("Matriz en posicion óptima recibida:");
-    Fn_printMatriz(MatrizEstado); // Si es necesario, imprime la matriz recibida
+    // Serial.println("Matriz en posicion óptima recibida:");
+    // Fn_printMatriz(int MatrizEstadoNuevo[N][N]); // Si es necesario, imprime la matriz recibida
 
-    int MatrizMinimax[N][N];
-    convertir_tablero(MatrizEstado, MatrizMinimax); // Convertir la matriz original a la representación adecuada
+    int MatrizEstadoNuevo[N][N];
+    convertir_tablero(MatrizEstado, MatrizEstadoNuevo); // Convertir la matriz original a la representación adecuada
 
     int pos_optima, resultado;
-    movOptimo(MatrizMinimax, &pos_optima, &resultado); // Encontrar la posición óptima
+    movOptimo(MatrizEstadoNuevo, &pos_optima, &resultado); // Encontrar la posición óptima
 
     // Si la posición óptima está entre 0 y 8, retorna esa posición
     if (pos_optima >= 0 && pos_optima <= 8)
@@ -187,7 +186,7 @@ int PosicionOptima()
     // Si no hay movimientos posibles, verificar el resultado del juego
     else if (pos_optima == -1)
     {
-        resultado = compruebaGanador(MatrizMinimax); // Verificar el resultado del juego
+        resultado = compruebaGanador(MatrizEstadoNuevo); // Verificar el resultado del juego
         if (resultado == 2)
         {
             pos_optima = 10; // Empate
