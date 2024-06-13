@@ -9,6 +9,7 @@
 #include "Comunicacion_JSON.h"
 #include <ESP32Servo.h>
 #include "../lib/TresEnRayaTest.h"
+#include "../lib/TresEnRaya.h"
 
 //LCD
 #define PIN_SDA 8
@@ -36,6 +37,7 @@ int global_sizemenu;
 
 
 extern int MatrizEstado[3][3];
+extern bool Pieces[10];
 
 //Calibracion
 extern float M_Base, M_Hombro, M_Codo, M_Pinza;
@@ -61,6 +63,9 @@ int sizemenu5 = sizeof(menu5) / sizeof(menu5[0]);
 
 String menu6[] = { "Matriz", "Atras" }; //Inicializamos nuestro Array con los elementos del submenu de modo manual
 int sizemenu6 = sizeof(menu6) / sizeof(menu6[0]);
+
+String menu7[] = { "Facil", "Dificil", "Reset", "Atras" }; //Inicializamos nuestro Array con los elementos del submenu de modo manual
+int sizemenu7 = sizeof(menu7) / sizeof(menu7[0]);
 
 void fn_menu(byte pos, String menus[], byte sizemenu, String titulo);
 void fn_menu1(byte pos, String menus[], byte sizemenu, String titulo);

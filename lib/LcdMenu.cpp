@@ -8,6 +8,9 @@ void Modo_Automatico_Trobot();
 void Modo_Automatico_Tusuario();
 void Modo_Manual_Trobot();
 void Modo_Manual_Tusuario();
+void Modo_Automatico_Trobot_Dificl();
+void Modo_Automatico_Tusuario_Dificil();
+void PosicionManual();
 
 
 int ejecutarJuegoSerial() {
@@ -19,7 +22,7 @@ int ejecutarJuegoSerial() {
     return valorLeido;
 }
 
-
+//Función que actualiza el LCD con el menú actual
 void fn_menu(byte pos, String menus[], byte sizemenu, String titulo) {
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -43,6 +46,7 @@ void fn_menu(byte pos, String menus[], byte sizemenu, String titulo) {
     if (contador < 0) contador = sizemenu - 1;
 }
 
+//Funcion para desplazarse dentro del submenu Modo manual, Turno Robot
 void fn_menu1(byte pos, String menus[], byte sizemenu, String titulo) {
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -66,8 +70,6 @@ void fn_menu1(byte pos, String menus[], byte sizemenu, String titulo) {
     if (contador >= sizemenu) contador = 0;
     if (contador < 0) contador = sizemenu - 1;
 }
-
-
 
 //Funcion para la calibracion de los motores
 float calibration (float M_var, int vminC, int vmaxC,int SelecMotor) {
@@ -132,9 +134,7 @@ float calibration (float M_var, int vminC, int vmaxC,int SelecMotor) {
   level_menu=1;
 }
 
-
-
-//Funcion para salir presionando el boton del modo manual turno usuario y robot
+//Funcion para jugar el modo facil dentro del modo automatico
 void Modo_Automatico_Trobot() {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -143,13 +143,15 @@ void Modo_Automatico_Trobot() {
   lcd.print("Robot jugando");
 
   while (true) {
-    Serial.println("Modo automatico funcion");
+    Serial.println("Modo automatico funcion"); //modo facil
     if (EmergencyPressed) {
       return; // Detener todas las acciones si el botón de emergencia está presionado
     }
 
     //int valor = ejecutarJuegoSerial();
-    int valor = ComputadoraMovimiento();  // funcion de 3 en raya basico
+    int valor = ComputadoraMovimientoEasy();  // funcion de 3 en raya basico
+
+    //int valor = PosicionOptima();
     
     Serial.println(valor);
     
@@ -199,7 +201,74 @@ void Modo_Automatico_Trobot() {
   level_menu = 3;
 }
 
-//Funcion para salir presionando el boton del modo manual turno usuario y robot
+//Funcion para jugar el modo dificil dentro del modo automatico
+void Modo_Automatico_Trobot_Dificl() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TURNO ROBOT");
+  lcd.setCursor(0, 1);
+  lcd.print("Robot jugando");
+
+  while (true) {
+    Serial.println("Modo automatico funcion");
+    if (EmergencyPressed) {
+      return; // Detener todas las acciones si el botón de emergencia está presionado
+    }
+
+    //int valor = ejecutarJuegoSerial();
+    int valor = ComputadoraMovimiento();  // funcion de 3 en raya basico
+
+    //int valor = PosicionOptima();
+    
+    Serial.println(valor);
+    
+
+    if (valor<=9)
+    {
+      Modo_Automatico_Tusuario_Dificil();
+      return;
+    }
+
+    else if (valor==10)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("JUEGO EMPATADO");
+      Serial.println("JUEGO EMPATADO");
+      return;
+    }
+    else if (valor==11){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("PERDISTE!");
+      Serial.println("GANO ROBOT");
+      return;
+    }
+    else if (valor==12){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("GANASTE!");
+      Serial.println("GANO USUARIO");
+      return;
+    }
+
+    if (rotaryEncoder.isEncoderButtonClicked()) {
+
+      static unsigned long lastTimePressed = 0; // Soft debouncing
+      if (millis() - lastTimePressed >= 500) {
+        Serial.print("button pressed soft");
+        
+        lastTimePressed = millis();
+
+        return;
+      }
+    }
+  }
+  contador = 0;
+  level_menu = 8;
+}
+
+//Funcion para ejecutar el movimiento del turno usurio dentro del modo automatico, modo facil
 void Modo_Automatico_Tusuario() {
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -228,7 +297,36 @@ void Modo_Automatico_Tusuario() {
   }
 }
 
-//Funcion para salir presionando el boton del modo manual turno usuario
+//Funcion para ejecutar el movimiento del turno usurio dentro del modo automatico, modo dificil
+void Modo_Automatico_Tusuario_Dificil() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("TURNO USUARIO");
+  lcd.setCursor(0, 1);
+  lcd.print("Mueve una ficha");
+
+  while (true) {
+    //Serial.println("Modo automatico turno usuario");
+
+    if (EmergencyPressed) {
+      return; // Detener todas las acciones si el botón de emergencia está presionado
+    }
+
+    if (rotaryEncoder.isEncoderButtonClicked()) {
+
+      //static unsigned long lastTimePressed = 0; // Soft debouncing
+      if (millis() - lastTimePressed >= 50) {
+        Serial.print("button pressed soft en Fnmodo automatico usuario");
+        
+        lastTimePressed = millis();
+        Modo_Automatico_Trobot_Dificl();
+        return;
+      }
+    }
+  }
+}
+
+//Funcion para ejecutar el movimiento del turno usurio dentro del modo manual
 void Modo_Manual_Tusuario(){
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -247,12 +345,13 @@ void Modo_Manual_Tusuario(){
       //static unsigned long lastTimePressed = 0; // Soft debouncing
       if (millis() - lastTimePressed >= 500) {
         Serial.print("button pressed soft");
-        Modo_Manual_Trobot();
         lastTimePressed = millis();
         return;
       }
     }
   }
+  contador=0;
+  level_menu=6;
 }
 
 void ComandoMovimiento(int position)
@@ -264,7 +363,7 @@ void ComandoMovimiento(int position)
   }
 }
 
-//Funcion para salir presionando el boton del modo manual turno robot
+//Funcion para ejecutar el movimiento del turno robot dentro del modo manual
 void Modo_Manual_Trobot() {
   while (true) {
 
@@ -286,20 +385,14 @@ void Modo_Manual_Trobot() {
         return;
       }
     }
-    // Lógica para abrir y cerrar la pinza automáticamente
-    for (int angle = 0; angle <= 35; angle++) {
-      motorPinza.write(angle);
-    }
-    
-    for (int angle = 35; angle >= 0; angle--) {
-      motorPinza.write(angle);
-    }
     
   }
   contador=0;
   level_menu=6;
 }
 
+// Funcion para imprimir la posicion dentro del modo manual, turno robot
+// Falta Poner codigo del modo de juego manual
 void PosicionManual()
 {
   lcd.clear();
@@ -313,9 +406,45 @@ void PosicionManual()
   level_menu = 5; 
 }
 
+//Funcion para ejecutar el movimiento del turno usurio dentro del modo automatico, modo facil
+void Reset_Position() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("MENU RESET");
+  lcd.setCursor(0, 1);
+  lcd.print("POS RESET");
+  
+
+  for (int i=0; i<10;i++){
+    Pieces[i]=0;
+  } 
+
+  while (true) {
+    //Serial.println("Modo automatico turno usuario");
+
+    if (EmergencyPressed) {
+      return; // Detener todas las acciones si el botón de emergencia está presionado
+    }
+
+    if (rotaryEncoder.isEncoderButtonClicked()) {
+
+      //static unsigned long lastTimePressed = 0; // Soft debouncing
+      if (millis() - lastTimePressed >= 50) {
+        Serial.print("button pressed soft en Fnmodo automatico usuario");
+        
+        lastTimePressed = millis();
+        return;
+      }
+    }
+  }
+  contador = 0;
+  level_menu = 2;
+}
+
 //Funcion para manejar los menus y submenus de la interfaz
 void Robot_Menu() {
-
+  
+  // Parada de emergencia.
   if(EmergencyPressed){
     showEmergencyMessage();
     contador = 0;
@@ -329,64 +458,61 @@ void Robot_Menu() {
     last_level_menu = level_menu;
 
     switch (level_menu) {
-      case 0: // Menu Principal
+      case 0: // Menu Principal. Calibracion, M.Automatico, M.Manual.
         global_sizemenu = sizemenu1;
         fn_menu(contador, menu1, sizemenu1, "MENU PRINCIPAL");
         Serial.println(sizemenu1);
         break;
 
-      case 1: // SubMenu Calibracion
-        //digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
+      case 1: // SubMenu Calibracion. Motor base, Motor hombro, Motor codo, Pinza.
         global_sizemenu = sizemenu2;
         fn_menu(contador, menu2, sizemenu2, "MENU CALIBRACION");
         break;
 
-      case 2: // SubMenu Modo Automatico
-        //digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
-        global_sizemenu = sizemenu3;
-        fn_menu(contador, menu3, sizemenu3, "MENU M.AUTOMATICO");
+      case 2: // SubMenu Modo automatico. Modos Facil, Dificil, atras.
+        global_sizemenu = sizemenu7;
+        fn_menu(contador, menu7, sizemenu7, "MENU M.AUTOMATICO");
         break;
 
-      case 3: // SubMenu Empezar del Modo Automatico
+      case 3: // SubMenu Modo automatico modo fácil. Turnos usuario, robot, atras.
         global_sizemenu = sizemenu4;
-        fn_menu(contador, menu4, sizemenu4, "MENU M.AUTOMATICO");
+        fn_menu(contador, menu4, sizemenu4, "M.AUTOMATICO FACIL");
         break;
 
-      case 4: // SubMenu Modo Manual
-        //digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
+      case 4: // SubMenu Modo Manual. Empezar, atras.
         global_sizemenu = sizemenu3;
         fn_menu(contador, menu3, sizemenu3, "MENU M.MANUAL");
         break;
 
-      case 5: // SubMenu Empezar del Modo Manual
+      case 5: // SubMenu Empezar del Modo Manual. Turnos usuario, robot, atras.
         global_sizemenu = sizemenu4;
         fn_menu(contador, menu4, sizemenu4, "MENU M.MANUAL");
         break;
 
-      case 6: // SubMenu Empezar del Modo Manual (detallado)
-       // digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
+      case 6: // SubMenu Empezar del Modo manual turno robot. P1, P2, P3, ..., atras.
         global_sizemenu = sizemenu5;
         fn_menu1(contador, menu5, sizemenu5, "MENU M.MANUAL");
         break;
       
-      case 7: // SubMenu Conexion
+      case 7: // SubMenu Conexion, Matriz, atras.
         global_sizemenu = sizemenu6;
         fn_menu(contador, menu6, sizemenu6, "MENU CONEXION");
+        break;
+
+      case 8: // SubMenu Modo automatico modo Difícl. Turnos usuario, robot, atras.
+        global_sizemenu = sizemenu4;
+        fn_menu(contador, menu4, sizemenu4, "M.AUTOMATICO DIFICIL");
         break;
       
     }
     
   }
 
-  // Maneja la lógica de los botones cuando se presiona el botón
+  // Maneja la lógica de los botones cuando se presiona el botón.
   if (btnpress) {
     switch (level_menu) {
       
-      case 0: // Menu Principal
+      case 0: // Menu Principal.
         switch (contador) {
           case 0: // Calibracion
             contador = 0;
@@ -407,7 +533,7 @@ void Robot_Menu() {
         }
         break;
 
-      case 1: // SubMenu Calibracion
+      case 1: // SubMenu Calibracion.
         switch (contador) {
           case 0: // Motor Base
             lcd.clear();
@@ -436,53 +562,50 @@ void Robot_Menu() {
           case 4: // Atras
             contador = 0;
             level_menu = 0;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, HIGH);
             break;
         }
         break;
 
-      case 2: // SubMenu Modo Automatico
+      case 2: // SubMenu Modo Automatico, escoge la dificultad de juego.
         switch (contador) {
-          case 0: // Empezar
+          case 0: // Facil
             contador = 0;
             level_menu = 3;
             break;
-          case 1: // Atras
+          case 1: // Dificil
+            contador = 1;
+            level_menu = 8;
+            break;
+          case 2: // Reset
+            level_menu = 9;
+
+          case 3: // Atras
             contador = 1;
             level_menu = 0;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, HIGH);
             break;
         }
         break;
 
-      case 3: // SubMenu Empezar del Modo Automatico
+      case 3: // SubMenu Modo Fácil del Modo Automatico.
         switch (contador) {
           case 0: // T. Usuario
             Modo_Automatico_Tusuario();
             contador = 0;
             level_menu = 3;
-            //digitalWrite(LED_ROJO, ledRojoEncendido ? HIGH : LOW);
-            //digitalWrite(LED_VERDE, LOW);
             break;
           case 1: // T. Robot
             Modo_Automatico_Trobot();
             contador = 0;
             level_menu = 3;
-            //digitalWrite(LED_VERDE, HIGH);
-            //digitalWrite(LED_ROJO, LOW);
             break;
           case 2: // Atras
             contador = 0;
             level_menu = 2;
-            //digitalWrite(LED_VERDE, LOW);
-            //digitalWrite(LED_ROJO, LOW);
             break;
         }
         break;
 
-      case 4: // SubMenu Modo Manual
+      case 4: // SubMenu Modo Manual.
         switch (contador) {
           case 0: // Empezar
             contador = 0;
@@ -491,37 +614,29 @@ void Robot_Menu() {
           case 1: // Atras
             contador = 2;
             level_menu = 0;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, HIGH);
             break;
         }
         break;
 
-case 5: // SubMenu Empezar del Modo Manual
+      case 5: // SubMenu Empezar del Modo Manual.
         switch (contador) {
           case 0: // T. Usuario
             Modo_Manual_Tusuario();
             contador = 0;
             level_menu = 6;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, LOW);
             break;
           case 1: // T. Robot
             contador = 0;
-            level_menu = 6;
-            //digitalWrite(LED_VERDE, HIGH);
-            //digitalWrite(LED_ROJO, LOW);
+            level_menu =6;
             break;
           case 2: // Atras
             contador = 0;
             level_menu = 4;
-            //digitalWrite(LED_VERDE, LOW);
-            //digitalWrite(LED_ROJO, LOW);
             break;
         }
         break;
       
-      case 6: // SubMenu T.ROBOT Modo Manual
+      case 6: // SubMenu Turno Robot Modo Manual.
         switch (contador) {
           case 0: 
             PosicionManual();
@@ -553,15 +668,13 @@ case 5: // SubMenu Empezar del Modo Manual
           case 9:
             contador = 1;
             level_menu = 5;
-            //digitalWrite(LED_VERDE, LOW);
-            //digitalWrite(LED_ROJO, LOW);
             break;
         }
 
         final_position = global_position;
         break;
 
-      case 7: //===============================================================================menu etsado
+      case 7: //SubMenu Comunicación.
         switch (contador) {
           case 0: // Conexion
             Fn_MatrizState();
@@ -570,12 +683,34 @@ case 5: // SubMenu Empezar del Modo Manual
           case 1: // T. Robot
             contador = 0;
             level_menu = 0;
-            //digitalWrite(LED_VERDE, HIGH);
-            //digitalWrite(LED_ROJO, LOW);
             break;
         }
         break;
 
+      case 8: // SubMenu Modo Difícl del Modo Automatico.
+        switch (contador) {
+          case 0: // T. Usuario
+            Modo_Automatico_Tusuario_Dificil() ;
+            contador = 0;
+            level_menu = 8;
+            break;
+          case 1: // T. Robot
+            Modo_Automatico_Trobot_Dificl();
+            contador = 0;
+            level_menu = 8;
+            break;
+          case 2: // Atras
+            contador = 0;
+            level_menu = 2;
+            break;
+        }
+        break;
+
+       case 9: // SubMenu Modo Difícl del Modo Automatico.
+        Reset_Position();
+        contador = 0;
+        level_menu = 2;
+        break;       
 
     }
     btnpress = false;
@@ -590,7 +725,7 @@ void Inicializar_LCD() {
   lcd.createChar(0, flecha); 
 
   //Iniciar en menu principal
-  fn_menu(contador, menu1, sizemenu1, "MENU PRINCIPAL"); //Iniciamos presentando el menu principal 
+  fn_menu(contador, menu1, sizemenu1, "MENU PRINCIPAL"); 
 
   //Servomotor
   motorPinza.attach(MOTOR_PINZA_PIN);

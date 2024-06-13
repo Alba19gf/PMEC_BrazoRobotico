@@ -164,8 +164,6 @@ int PosicionOptima()
     // Si no hay movimientos posibles, verificar el resultado del juego
     else if (pos_optima == -1)
     {
-        if (pos_optima == -1)
-        {
             int resultado = comprueba_ganador(MatrizMinimax);
             if (resultado == 2)
             {
@@ -179,8 +177,6 @@ int PosicionOptima()
             {
                 pos_optima = 12; // El humano ha ganado
             }
-        }
     }
-
     return pos_optima;
 }

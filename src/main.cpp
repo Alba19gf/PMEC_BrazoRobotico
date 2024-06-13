@@ -16,11 +16,13 @@
 
 
 int MatrizEstado[3][3]; // Matriz de estado global
+bool Pieces[10]={0,0,0,0,0,0,0,0,0,0};      // Vector que determina las fichas fuera del tablero, del 0 al 4 fichas de robot "O", 4 al 9 fichas humano "X"
 const int buttonPin = 15; // Pin del botón
 int buttonState = 0;
 int global_position = 0; 
 int final_position = 0;
 int last_final_position = final_position;
+
 float M_Base = 0, M_Hombro=0, M_Codo=0, M_Pinza=0;
 
 void setup()

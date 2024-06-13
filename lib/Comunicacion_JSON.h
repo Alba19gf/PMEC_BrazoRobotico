@@ -13,7 +13,7 @@ const char* ssid = "ESP_3DEYE";
 const char* password = "holahola";
 //const char* ssid = "MIM-UNIOVI";
 //const char* password = "mimuniovi2018";
-const char* host = "192.168.4.4"; // IP servidor MATLAB
+const char* host = "192.168.4.3"; // IP servidor MATLAB
 const uint16_t port = 55000;
 
 WiFiClient client;
