@@ -561,7 +561,7 @@ case 5: // SubMenu Empezar del Modo Manual
         final_position = global_position;
         break;
 
-      case 7: //===============================================================================menu etsado
+      case 7: //===============================================================================menu essado
         switch (contador) {
           case 0: // Conexion
             Fn_MatrizState();
