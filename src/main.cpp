@@ -16,12 +16,14 @@
 
 
 int MatrizEstado[3][3]; // Matriz de estado global
-bool Pieces[10]={0,0,0,0,0,0,0,0,0,0};      // Vector que determina las fichas fuera del tablero, del 0 al 4 fichas de robot "O", 4 al 9 fichas humano "X"
 const int buttonPin = 15; // Pin del botón
 int buttonState = 0;
 int global_position = 0; 
 int final_position = 0;
 int last_final_position = final_position;
+int Moving=0;
+int led_red=40;
+int led_green=41;
 
 float M_Base = 0, M_Hombro=0, M_Codo=0, M_Pinza=0;
 
@@ -33,6 +35,14 @@ void setup()
   Inicializar_LCD();
 
   pinMode(buttonPin, INPUT_PULLUP); // Configurar el pin del botón
+
+  pinMode(led_red, OUTPUT);
+  pinMode(led_green, OUTPUT);
+
+  digitalWrite(led_red, LOW);
+  digitalWrite(led_green, LOW);
+  
+
 }
 
 void loop()
@@ -41,13 +51,11 @@ void loop()
   rotary_loop();
   Robot_Menu();
 
-  if (final_position < 10 && final_position != last_final_position)
-  {
-    Serial.println("Move to position: " + String(final_position));
-    last_final_position = final_position;
+  // Verifica si se presionó el botón de emergencia fuera del menú
+  if (EmergencyPressed) {
+    showEmergencyMessage();
+    return;
   }
-  
-  
 
   buttonState = digitalRead(buttonPin);
 
@@ -60,7 +68,6 @@ void loop()
  if(EmergencyPressed)
  {
   Serial.print("Emergency stop");
-  Fn_printMatriz(MatrizEstado);
  }
 
 }

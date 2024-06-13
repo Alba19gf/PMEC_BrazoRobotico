@@ -51,6 +51,7 @@ void fn_menu1(byte pos, String menus[], byte sizemenu, String titulo) {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(titulo);
+    int seleccion;
 
     int col = (pos / 3) * 4;
     int row = pos % 3 + 1;
@@ -64,8 +65,17 @@ void fn_menu1(byte pos, String menus[], byte sizemenu, String titulo) {
         lcd.print(menus[i]);
     }
 
-    global_position = pos + 1; // Actualiza la posición global
-    Serial.println("Manual robot: "+String(global_position ));
+    //global_position = pos + 1; // Actualiza la posición global
+    if (pos==0) global_position=1;
+    else if (pos==1) global_position=4;
+    else if (pos==2) global_position=7;
+    else if (pos==3) global_position=2;
+    else if (pos==4) global_position=5;
+    else if (pos==5) global_position=8;
+    else if (pos==6) global_position=3;
+    else if (pos==7) global_position=6;
+    else if (pos==8) global_position=9;
+    //Serial.println("Manual robot: "+String(seleccion));
 
     if (contador >= sizemenu) contador = 0;
     if (contador < 0) contador = sizemenu - 1;
@@ -141,6 +151,8 @@ void Modo_Automatico_Trobot() {
   lcd.print("TURNO ROBOT");
   lcd.setCursor(0, 1);
   lcd.print("Robot jugando");
+  digitalWrite(led_red, HIGH);
+  digitalWrite(led_green, LOW);
 
   while (true) {
     Serial.println("Modo automatico funcion"); //modo facil
@@ -161,7 +173,6 @@ void Modo_Automatico_Trobot() {
       Modo_Automatico_Tusuario();
       return;
     }
-
     else if (valor==10)
     {
       lcd.clear();
@@ -208,7 +219,8 @@ void Modo_Automatico_Trobot_Dificl() {
   lcd.print("TURNO ROBOT");
   lcd.setCursor(0, 1);
   lcd.print("Robot jugando");
-
+  digitalWrite(led_red, HIGH);
+  digitalWrite(led_green, LOW);
   while (true) {
     Serial.println("Modo automatico funcion");
     if (EmergencyPressed) {
@@ -275,6 +287,8 @@ void Modo_Automatico_Tusuario() {
   lcd.print("TURNO USUARIO");
   lcd.setCursor(0, 1);
   lcd.print("Mueve una ficha");
+  digitalWrite(led_red, LOW);
+  digitalWrite(led_green, HIGH);
 
   while (true) {
     //Serial.println("Modo automatico turno usuario");
@@ -304,6 +318,8 @@ void Modo_Automatico_Tusuario_Dificil() {
   lcd.print("TURNO USUARIO");
   lcd.setCursor(0, 1);
   lcd.print("Mueve una ficha");
+  digitalWrite(led_red, LOW);
+  digitalWrite(led_green, HIGH);
 
   while (true) {
     //Serial.println("Modo automatico turno usuario");
@@ -326,119 +342,127 @@ void Modo_Automatico_Tusuario_Dificil() {
   }
 }
 
-//Funcion para ejecutar el movimiento del turno usurio dentro del modo manual
-void Modo_Manual_Tusuario(){
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("TURNO USUARIO");
-  lcd.setCursor(0, 1);
-  lcd.print("Mueve una ficha");
+// //Funcion para ejecutar el movimiento del turno usurio dentro del modo manual
+// void Modo_Manual_Tusuario(){  //FICHA X
+//   while (true) {
 
-  while (true) {
+//     if (EmergencyPressed) {
+//       return; // Detener todas las acciones si el botón de emergencia está presionado
+//     }
 
-    if (EmergencyPressed) {
-      return; // Detener todas las acciones si el botón de emergencia está presionado
-    }
+//     if (rotaryEncoder.isEncoderButtonClicked()) {
 
-    if (rotaryEncoder.isEncoderButtonClicked()) {
+//       //static unsigned long lastTimePressed = 0; // Soft debouncing
+//       if (millis() - lastTimePressed >= 500) {
+//         Serial.print("button pressed soft");
+//         lastTimePressed = millis();
+//         return;
+//       }
+//     }
+//   }
+// }
 
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
-        lastTimePressed = millis();
-        return;
-      }
-    }
-  }
-  contador=0;
-  level_menu=6;
-}
-
-void ComandoMovimiento(int position)
+void ComandoMovimiento(int position,int ficha)     //ficha 0 para azul         1 para rosa
 {
   if (position < 10 && position != final_position)
   {
-    Serial.println("Move to position: " + String(position));
+    //Serial.println("Move to position: " + String(position));
     final_position = position;
   }
-}
+
+  Moving=1;
+  Fn_MatrizState();
+  int result = checkWinsf(MatrizEstado);
+  if (result==10)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("JUEGO EMPATADO");
+      Serial.println("JUEGO EMPATADO");
+      return;
+    }
+    else if (result==11){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("GANO 0!");
+      Serial.println("GANO 0");
+      return;
+    }
+    else if (result==12){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("GANO X!");
+      Serial.println("GANO X");
+      return;
+    }
+
+  int from=Movefrom(ficha);
+  //Serial.println(from);
+  //Serial.print("Mover a la posicion:");
+  //Serial.println(global_position);
+
+  int valor=Mover_pieza(from,global_position);
+
+
+  if (valor==1){
+        return;           
+  }
+  
+
+}  
+
+
+
 
 //Funcion para ejecutar el movimiento del turno robot dentro del modo manual
-void Modo_Manual_Trobot() {
-  while (true) {
+// void Modo_Manual_Trobot() {         //FICHA O
+//   while (true) {
 
-    if (EmergencyPressed) {
-      return; // Detener todas las acciones si el botón de emergencia está presionado
-    }
+//     if (EmergencyPressed) {
+//       return; // Detener todas las acciones si el botón de emergencia está presionado
+//     }
+//     if (rotaryEncoder.isEncoderButtonClicked()) {
 
-    cont=rotaryEncoder.readEncoder() + 1;
-
-
-    if (rotaryEncoder.isEncoderButtonClicked()) {
-
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
+//       //static unsigned long lastTimePressed = 0; // Soft debouncing
+//       if (millis() - lastTimePressed >= 500) {
+//         Serial.print("button pressed soft");
         
-        lastTimePressed = millis();
-        Modo_Manual_Tusuario();
-        return;
-      }
-    }
+//         lastTimePressed = millis();
+//         return;
+//       }
+//     }
     
-  }
-  contador=0;
-  level_menu=6;
+//   }
+// }
+
+// Funcion para imprimir la posicion dentro del modo manual, turno robot
+// Falta Poner codigo del modo de juego manual
+void PosicionManual_Ficha_X()
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("FICHA X");                 
+  lcd.setCursor(0, 1); 
+  lcd.print("Posicion " + String(global_position));
+  ComandoMovimiento(global_position,1);
+  //Modo_Manual_Trobot();
+  contador = 0;
+  level_menu = 9; 
 }
 
 // Funcion para imprimir la posicion dentro del modo manual, turno robot
 // Falta Poner codigo del modo de juego manual
-void PosicionManual()
+void PosicionManual_Ficha_O()
 {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("TURNO ROBOT");                 
+  lcd.print("FICHA O");                 
   lcd.setCursor(0, 1); 
   lcd.print("Posicion " + String(global_position));
-  ComandoMovimiento(global_position);
-  Modo_Manual_Trobot();
+  ComandoMovimiento(global_position,0);
+  //Modo_Manual_Tusuario();
   contador = 0;
-  level_menu = 5; 
-}
-
-//Funcion para ejecutar el movimiento del turno usurio dentro del modo automatico, modo facil
-void Reset_Position() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("MENU RESET");
-  lcd.setCursor(0, 1);
-  lcd.print("POS RESET");
-  
-
-  for (int i=0; i<10;i++){
-    Pieces[i]=0;
-  } 
-
-  while (true) {
-    //Serial.println("Modo automatico turno usuario");
-
-    if (EmergencyPressed) {
-      return; // Detener todas las acciones si el botón de emergencia está presionado
-    }
-
-    if (rotaryEncoder.isEncoderButtonClicked()) {
-
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 50) {
-        Serial.print("button pressed soft en Fnmodo automatico usuario");
-        
-        lastTimePressed = millis();
-        return;
-      }
-    }
-  }
-  contador = 0;
-  level_menu = 2;
+  level_menu = 6; 
 }
 
 //Funcion para manejar los menus y submenus de la interfaz
@@ -485,13 +509,13 @@ void Robot_Menu() {
         break;
 
       case 5: // SubMenu Empezar del Modo Manual. Turnos usuario, robot, atras.
-        global_sizemenu = sizemenu4;
-        fn_menu(contador, menu4, sizemenu4, "MENU M.MANUAL");
+        global_sizemenu = sizemenu8;
+        fn_menu(contador, menu8, sizemenu8, "MENU M.MANUAL");
         break;
 
       case 6: // SubMenu Empezar del Modo manual turno robot. P1, P2, P3, ..., atras.
         global_sizemenu = sizemenu5;
-        fn_menu1(contador, menu5, sizemenu5, "MENU M.MANUAL");
+        fn_menu1(contador, menu5, sizemenu5, "FICHA X");
         break;
       
       case 7: // SubMenu Conexion, Matriz, atras.
@@ -502,6 +526,11 @@ void Robot_Menu() {
       case 8: // SubMenu Modo automatico modo Difícl. Turnos usuario, robot, atras.
         global_sizemenu = sizemenu4;
         fn_menu(contador, menu4, sizemenu4, "M.AUTOMATICO DIFICIL");
+        break;
+
+      case 9: // SubMenu Empezar del Modo manual turno robot. P1, P2, P3, ..., atras.
+        global_sizemenu = sizemenu5;
+        fn_menu1(contador, menu5, sizemenu5, "FICHA O");
         break;
       
     }
@@ -576,10 +605,7 @@ void Robot_Menu() {
             contador = 1;
             level_menu = 8;
             break;
-          case 2: // Reset
-            level_menu = 9;
-
-          case 3: // Atras
+          case 2: // Atras
             contador = 1;
             level_menu = 0;
             break;
@@ -620,14 +646,13 @@ void Robot_Menu() {
 
       case 5: // SubMenu Empezar del Modo Manual.
         switch (contador) {
-          case 0: // T. Usuario
-            Modo_Manual_Tusuario();
+          case 0: // Ficha X
             contador = 0;
             level_menu = 6;
             break;
-          case 1: // T. Robot
+          case 1: // Ficha O
             contador = 0;
-            level_menu =6;
+            level_menu =9;
             break;
           case 2: // Atras
             contador = 0;
@@ -639,31 +664,31 @@ void Robot_Menu() {
       case 6: // SubMenu Turno Robot Modo Manual.
         switch (contador) {
           case 0: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 1: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 2:
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 3: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 4: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 5: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 6: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 7: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 8: 
-            PosicionManual();
+            PosicionManual_Ficha_X();
             break;
           case 9:
             contador = 1;
@@ -706,11 +731,42 @@ void Robot_Menu() {
         }
         break;
 
-       case 9: // SubMenu Modo Difícl del Modo Automatico.
-        Reset_Position();
-        contador = 0;
-        level_menu = 2;
-        break;       
+      case 9: // SubMenu Turno Robot Modo Manual.
+        switch (contador) {
+          case 0: 
+            PosicionManual_Ficha_O();
+            break;
+          case 1: 
+            PosicionManual_Ficha_O();
+            break;
+          case 2:
+            PosicionManual_Ficha_O();
+            break;
+          case 3: 
+            PosicionManual_Ficha_O();
+            break;
+          case 4: 
+            PosicionManual_Ficha_O();
+            break;
+          case 5: 
+            PosicionManual_Ficha_O();
+            break;
+          case 6: 
+            PosicionManual_Ficha_O();
+            break;
+          case 7: 
+            PosicionManual_Ficha_O();
+            break;
+          case 8: 
+            PosicionManual_Ficha_O();
+            break;
+          case 9:
+            contador = 1;
+            level_menu = 5;
+            break;
+        }
+        final_position = global_position;
+        break;
 
     }
     btnpress = false;

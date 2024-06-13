@@ -1,6 +1,8 @@
 #include "TresEnRayaTest.h"
 
-//============================ MODO DIFICIL=====================================================    
+int Movefrom();
+
+//============================ MODO DIFICIL============================================================================================    
 // Función para verificar si alguien ha ganado
 int checkWin(int board[3][3]) {
     // Verificar filas, columnas y diagonales
@@ -100,15 +102,22 @@ int findBestMove(int board[3][3]) {
 
 // Función principal para determinar la jugada de la computadora
 int ComputadoraMovimiento() {
+    
     Serial.println("Modo dificil");
     Fn_MatrizState();
+    int from;                                    //variable para enviar a la funcion de cinematica
+    from=Movefrom(0);
     int result = checkWin(MatrizEstado);
     if (result != 0) return result;
-    
-    int bestMove = findBestMove(MatrizEstado);
-    return bestMove;
-}
+    int bestMove = findBestMove(MatrizEstado);      //variable para enviar a la funcion de cinematica
+    Moving=0;
+    Mover_pieza(from,bestMove);
 
+    if (Moving==1){
+            return bestMove;
+    }
+
+}
 //  ======================================== Modo robot facil==========================================================================
 
 // Función para verificar si alguien ha ganado
@@ -204,16 +213,73 @@ int findBestMovesf(int board[3][3]) {
 int ComputadoraMovimientoEasy() {
     Serial.println("Modo facil");
     Fn_MatrizState();
+    int from;
+    from=Movefrom(0);
     int result = checkWinsf(MatrizEstado);
     if (result != 0) return result;
-    
     int bestMove = findBestMovesf(MatrizEstado);
-    Serial.println(bestMove);
-    
-    return bestMove;
+
+    Moving=0;
+    Mover_pieza(from,bestMove);
+
+    if (Moving==1){
+        return bestMove;
+    }
+
+    // if (bestMove<=9){
+    //    // Serial.print("Colocar la pieza en la casilla: ");
+    //     //Serial.println(bestMove);
+    // }
+
+    // if (Moving==1){
+    //     Moving=Fn_readSerial();
+    //     if (Moving==0){
+    //          return bestMove;
+    //     }
+    // }  
 }
 
-int Movefrom()
+
+
+int Movefrom(int ficha)                 //ficha 0 para azul O         1 para rosa X
 {
+    int blue=1, pink=0;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if(MatrizEstado[i][j]==0) blue++;
+        else if (MatrizEstado[i][j]==1) pink++;
+      }
+    }
+    //Serial.print("Tomar pieza de: ");
+    
+
+    if (ficha==0){
+        return blue;
+        Serial.println(blue);
+    }
+
+    else if (ficha==1){
+        return (pink+6);
+        Serial.println(pink+6);
+    }
     
 }
+
+
+int Mover_pieza(int ini, int final){
+    digitalWrite(led_red, HIGH);
+    digitalWrite(led_green, LOW);
+    Serial.print("Mover desde: ");
+    Serial.print(ini);
+    Serial.print("Mover hasta: ");
+    Serial.print(final);
+    if (Moving==0){
+        Moving=Fn_readSerial();
+    if (Moving==1){
+        return 1;
+    }
+    }  
+    
+
+}
+

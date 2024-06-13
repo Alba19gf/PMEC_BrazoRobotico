@@ -115,3 +115,19 @@ void Fn_printMatriz(int matriz[3][3]){
       Serial.println();
     }
 }
+
+
+int Fn_readSerial() {
+  int valor;
+  while (!Serial.available());  // Espera hasta que haya datos disponibles en el puerto serial
+  valor = Serial.parseInt();  // Lee el valor desde el puerto serial
+
+  // Limpia el buffer del puerto serial
+  while (Serial.available()) {
+    Serial.read();
+  }
+  Serial.print("Engresado: ");
+  Serial.println(valor);
+  
+  return valor;  // Devuelve el valor leído
+}

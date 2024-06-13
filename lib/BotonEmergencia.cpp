@@ -7,18 +7,25 @@ void Fn_Emergency() {
   
 }
 
+// void showEmergencyMessage() {
+//   if (stp=0){
+//     lcd.clear();
+//     lcd.setCursor(0, 0);
+//     lcd.print("Parada de emergencia");
+//     stp=1;
+//   }
+
+//   if (!EmergencyPressed){
+//     stp=0;
+//   }
+
+// }
+
+//Funcion para imprimir mensaje de parado de emergencia
 void showEmergencyMessage() {
-  if (stp=0){
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Parada de emergencia");
-    stp=1;
-  }
-
-  if (!EmergencyPressed){
-    stp=0;
-  }
-
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Parada de emergencia");
 }
 
 //Funcion para imprimir mensaje de parado de emergencia

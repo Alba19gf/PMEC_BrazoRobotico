@@ -8,6 +8,8 @@
 #include <limits.h>
 extern int MatrizEstado[3][3];
 #define SIZE 3
+extern int led_red;
+extern int led_green;
 
 #define PLAYER_X 0  // Humano
 #define PLAYER_O 1  // Computadora
@@ -15,7 +17,8 @@ extern int MatrizEstado[3][3];
 
 
 
-
+int Movefrom(int ficha);
+int Mover_pieza(int ini, int final);
 int ComputadoraMovimiento();
 int findBestMove(int board[3][3]);
 int minimax(int board[3][3], int depth, int alpha, int beta, int isMaximizing);

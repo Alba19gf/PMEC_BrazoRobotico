@@ -6,17 +6,17 @@ void rotary_onButtonClick() {
     btnpress = true;
     if (millis() - lastTimePressed < 500) return;
     lastTimePressed = millis();
-    Serial.print("button pressed ");
-    Serial.print(millis());
-    Serial.println(" milliseconds after restart");
+    //Serial.print("button pressed ");
+    //Serial.print(millis());
+    //Serial.println(" milliseconds after restart");
 }
 
 void rotary_loop() {
     if (EmergencyPressed) return;
 
     if (rotaryEncoder.encoderChanged()) {
-        Serial.print("Value: ");
-        Serial.println(rotaryEncoder.readEncoder());
+        //Serial.print("Value: ");
+        //Serial.println(rotaryEncoder.readEncoder());
         cont = (rotaryEncoder.readEncoder());
         if (cont > cont_pre) contador++;
         if (cont < cont_pre) contador--;
