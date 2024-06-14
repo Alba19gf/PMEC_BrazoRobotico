@@ -1,792 +1,368 @@
-#include "AiEsp32RotaryEncoder.h"
-#include "Arduino.h"
-#include <LiquidCrystal_I2C.h>
-#include <ESP32Servo.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <ArduinoJson.h>
+#include <Arduino.h>
+#include <SPI.h>
+#include "../include/Almar.h"
 
-//WIFI
-const char* ssid = "ESP_3DEYE";
-const char* password = "holahola";
-const char* host = "192.168.4.3"; // IP servidor MATLAB
-const uint16_t port = 55000;
+const float dt = 0.1;
 
-WiFiClient client;
+float tol_global = 0.6;
+float tol_local = 0.2;
+float tol_tcp = 0.5;
 
+float error_global[N_MOTORS] = {1, 1, 1};
+float error_local[N_MOTORS] = {1, 1, 1};
 
-//ENCODER
-#define ROTARY_ENCODER_A_PIN 17  //dt
-#define ROTARY_ENCODER_B_PIN 14 //clk
-#define ROTARY_ENCODER_BUTTON_PIN 21  //sw
-#define ROTARY_ENCODER_VCC_PIN -1
-#define ROTARY_ENCODER_STEPS 4
-//instead of changing here, rather change numbers above
-AiEsp32RotaryEncoder rotaryEncoder = AiEsp32RotaryEncoder(ROTARY_ENCODER_A_PIN, ROTARY_ENCODER_B_PIN, ROTARY_ENCODER_BUTTON_PIN, ROTARY_ENCODER_VCC_PIN, ROTARY_ENCODER_STEPS);
-static unsigned long lastTimePressed = 0; // Soft debouncing
+// Base motor 0
+// Shoulder motor 1
+// Elbow motor 2
+int p = 0; // step
+int q = 0; // step
+int t = 0; // step
 
+float* steps_x;
+int n_steps_x;
+float* steps_y;
+int n_steps_y;
+float* steps_z;
+int n_steps_z;
+int num_pasosv2;
 
-//Servomotor
-#define MOTOR_PINZA_PIN 10
-Servo motorPinza; // Declara un objeto de tipo Servo para controlar el servomotor de la base
+int init_ctrl = 0;
+int init_pos = 0;
 
-// Variables globales para almacenar el último estado del contador y nivel de menú
-int contador=0;
-int cont=0;
-int cont_pre=0;
-int last_contador = -1;
-int last_level_menu = -1;
-bool btnpress = false;
-int global_sizemenu;
-const int buttonPin = 15; // Pin del botón
-int buttonState = 0;
-int MatrizEstado[3][3]; // Matriz de estado global
+float pastTcp[3] = {0, 0, 0};
+float origin[3] = {0, 0, 0};
 
-//LCD
-#define PIN_SDA 8
-#define PIN_SCL 12
-#define LCD_COLS 20
-#define LCD_ROWS 4
+hw_timer_t *timer = NULL;
+int ctrl = false;
+void IRAM_ATTR timerCtrl() {
+ ctrl = true;
+ // Lectura de los encoders (0, 1, 2)
+    pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
+    pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
+    pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
 
-//paro de emergencia
-const int EmergencyButton = 16; // Pin del botón
-volatile bool EmergencyPressed = false; // Variable para almacenar el estado del botón
+    // Corrección 360 grados
+    if((pos[0] - pastPos[0]) < -180)
+          pos[0] += 360;
+    else if((pos[0] - pastPos[0]) > 180)
+          pos[0] -= 360;
 
-LiquidCrystal_I2C lcd(0x27, LCD_COLS, LCD_ROWS);
-int level_menu = 0;  //Iniciamos la variable en el menu principal 
-byte flecha[] = { B10000, B11000, B11100, B11110, B11100, B11000, B10000, B00000 }; //Array para el símbolo de la flecha personalizada en el menú
+    if((pos[1] - pastPos[1]) < -180)
+          pos[1] += 360;
+    else if((pos[1] - pastPos[1]) > 180)
+          pos[1] -= 360;
 
-//Calibracion
-float M_Base = 0, M_Hombro=0, M_Codo=0, M_Pinza=0;
-
-//-------------------MENU-------------------//
-String menu1[] = { "Calibracion", "M.Automatico", "M.Manual", "Comunicacion"};  //Inicializamos nuestro Array con los elementos del menu princiapl
-int sizemenu1 = sizeof(menu1) / sizeof(menu1[0]); 
-
-String menu2[] = { "Motor Base:","Motor Hombro:","Motor Codo:","Pinza:", "Atras" }; //Inicializamos nuestro Array con los elementos del submenu de calibracion
-int sizemenu2 = sizeof(menu2) / sizeof(menu2[0]);
-
-String menu3[] = { "Empezar", "Atras" };
-int sizemenu3 = sizeof(menu3) / sizeof(menu3[0]); //Inicializamos nuestro Array con los elementos del submenu de modo automatico
-
-String menu4[] = { "T.Usuario", "T.Robot", "Atras" }; 
-int sizemenu4 = sizeof(menu4) / sizeof(menu4[0]);
-
-String menu5[] = { "P1","P2","P3","P4","P5","P6","P7","P8","P9","Atras" }; //Inicializamos nuestro Array con los elementos del submenu de modo manual
-int sizemenu5 = sizeof(menu5) / sizeof(menu5[0]);
-
-String menu6[] = { "Matriz", "Atras" }; //Inicializamos nuestro Array con los elementos del submenu de modo manual
-int sizemenu6 = sizeof(menu6) / sizeof(menu6[0]);
-
-//===========================================FUNCIONES===========================================================================================================
-
-void Fn_Emergency() {
-  
-  EmergencyPressed = digitalRead(EmergencyButton); // Lee el estado del botón
-}
-
-void showEmergencyMessage() {
-    lcd.setCursor(0, 0);
-    lcd.print("Parada de emergencia");
-    } 
-
-
-
-
-
-
-//COMUNICACION JSON
-void Fn_MatrizState() {
-  int tries=3, tr;
-
-  if (client.connect(host, port)) {
-    Serial.println("Conectado al servidor");
+    if((pos[2] - pastPos[2]) < -180)
+          pos[2] += 360;
+    else if((pos[2] - pastPos[2]) > 180)
+          pos[2] -= 360;
     
-    // Enviar solicitud al servidor
-    client.println("Solicitando matriz");
-      if (!client.connected()) {
-      Serial.println("Conexión perdida. Intentando reconectar...");
-      if (client.connect(host, port)) {
-        Serial.println("Conexión establecida.");
-      } else {
-        Serial.println("Error al conectar al servidor.");
-        delay(1000);
-        return;
-      }
-    }
+    pastPos[0] = pos[0];
+    pastPos[1] = pos[1];
+    pastPos[2] = pos[2];
     
-    // Leer respuesta del servidor
-    String jsonData = client.readStringUntil('\n');
-    client.println("Solicitando matriz");
-    
-    while (jsonData=="" && tr<=tries){
-      Serial.print(tr);
-      Serial.println(" jsonEmpty");
-      jsonData = client.readStringUntil('\n');
-      tr++;
-    }
+    // Corrección direcciones
+    pos[1] = -pos[1];
+    pos[2] = -pos[2];
+    // Corrección relación engranajes
+    //pos[1] = pos[1]*6/7;
+    pos[2] = pos[2]*11/18;
+    // Corrección origen
+    pos[0] += origin[0];
+    pos[1] += origin[1];
+    pos[2] += origin[2];
 
-    // Parsear JSON y almacenar la matriz en MatrizEstado
-    DynamicJsonDocument doc(256);
-    DeserializationError error = deserializeJson(doc, jsonData);
-    
-    if (error) {
-      Serial.print("Error al deserializar JSON: ");
-      Serial.println(error.c_str());
-      jsonData = client.readStringUntil('\n');
-      Serial.println("Matriz recibida2: ");
-      Serial.println(jsonData);
-      //Parsear JSON y almacenar la matriz en MatrizEstado
-      DynamicJsonDocument doc(256);
-      DeserializationError error = deserializeJson(doc, jsonData);
-      client.stop();
-      return;
-    }
+    nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
+    tcp[0] = curr_tcp.uno;
+    tcp[1] = curr_tcp.dos;
+    tcp[2] = curr_tcp.tres;
 
-    JsonArray jsonArray = doc.as<JsonArray>();
-    int i = 0;
-    for (JsonArray::iterator it = jsonArray.begin(); it != jsonArray.end(); ++it) {
-      JsonArray row = *it;
-      int j = 0;
-      for (JsonArray::iterator it2 = row.begin(); it2 != row.end(); ++it2) {
-        MatrizEstado[i][j] = (*it2).as<int>();
-        j++;
-      }
-      i++;
-    }
-    
-    client.stop();
-  } else {
-    Serial.println("Conexión fallida");
-  }
-}
-
-//Función que actualiza el LCD con el menú actual
-void fn_menu(byte pos, String menus[], byte sizemenu, String titulo) {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(titulo);
-
-  int startIndex = pos / 3 * 3; // Índice de inicio de las líneas a imprimir
-
-  for (int i = 0; i < 3; i++) {
-    int index = startIndex + i;
-    if (index < sizemenu) {
-      String menuItem = menus[index];
-      lcd.setCursor(1, i + 1); // Columna 1, filas 1, 2, 3
-      lcd.print(menuItem);
-      if (index == pos) {
-        lcd.setCursor(0, i + 1); // Columna 0, filas 1, 2, 3
-        lcd.write(byte(0)); // Flecha
-      }
-    }
-  }
-  if (contador>=sizemenu)
-  contador=0;
-  if (contador<0)
-  contador=sizemenu-1;
-}
-
-//Funcion para desplazarse dentro del submenu Modo manual
-void fn_menu1(byte pos, String menus[], byte sizemenu,  String titulo) {
-  lcd.clear(); // Limpia la pantalla LCD
-  lcd.setCursor(0, 0);
-  lcd.print(titulo);
-
-  // Calcula la columna y fila para la posición actual del cursor
-  int col = (pos / 3) * 4;
-  int row = pos % 3 + 1;
-
-  // Mueve el cursor a la posición actual y escribe la flecha
-  lcd.setCursor(col, row);
-  lcd.write(byte(0));
-
-  // Itera sobre todas las opciones del menú
-  for (int i = 0; i < sizemenu; i++) {
-    // Calcula la columna y fila para la opción actual
-    int col = (i / 3) * 4 + 1;
-    int row = i % 3 + 1;
-
-    // Mueve el cursor a la posición de la opción actual y escribe el texto del menú
-    lcd.setCursor(col, row);
-    lcd.print(menus[i]);
-  }
-    if (contador>=sizemenu)
-  contador=0;
-  if (contador<0)
-  contador=sizemenu-1;
-}
-
-//Funcion presionar boton encoder
-void rotary_onButtonClick() {
-  btnpress = true;
-
-  static unsigned long lastTimePressed = 0; // Soft debouncing
-  if (millis() - lastTimePressed < 500)
-  {
-    return;
-  }
-  lastTimePressed = millis();
-  Serial.print("button pressed ");
-  Serial.print(millis());
-  Serial.println(" milliseconds after restart");
-}
-
-void rotary_loop() {
-    
-  //dont print anything unless value changed
-  if (rotaryEncoder.encoderChanged())
-  {
-    Serial.print("Value: ");
-    Serial.println(rotaryEncoder.readEncoder());
-    cont=(rotaryEncoder.readEncoder());
-    if (cont>cont_pre)
+    if(pastTcp[0] != des_tcp[0] || pastTcp[1] != des_tcp[1] || pastTcp[2] != des_tcp[2] || init_ctrl)
     {
-      contador++;
-    }
-    if (cont<cont_pre)
-    {
-      contador--;
-    }
-    cont_pre=cont;
-  }
-  if (rotaryEncoder.isEncoderButtonClicked())
-  {
-    rotary_onButtonClick();
-  }
-}
+      struct nums angles1 = FnInvKinem(tcp[0], tcp[1], tcp[2]);
+      struct nums angles2 = FnInvKinem(des_tcp[0], des_tcp[1], des_tcp[2]);
+      int num_pasos_x = ceil(abs(angles1.uno - angles2.uno)/paso_x);
+      int num_pasos_y = ceil(abs(angles1.dos - angles2.dos)/paso_y);
+      int num_pasos_z = ceil(abs(angles1.tres - angles2.tres)/paso_z);
 
-void IRAM_ATTR readEncoderISR() {
-  rotaryEncoder.readEncoder_ISR();
-}
+      num_pasosv2 = MAX(num_pasos_x, num_pasos_y);
+      num_pasosv2 = MAX(num_pasosv2, num_pasos_z);
+      n_steps_x = num_pasosv2;
+      n_steps_y = num_pasosv2;
+      n_steps_z = num_pasosv2;
 
-float calibration (float M_var, int vminC, int vmaxC,int SelecMotor) {
-  lcd.setCursor(0, 1);
-  lcd.print("Valor: ");
-  lcd.print(M_var);
-  float temp_M_var;
-  float step_cal=0.1;     //Paso para incrementar en la calibracion
+      steps_x = tLineal_x(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], num_pasosv2);
+      steps_y = tLineal_y(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], num_pasosv2);
+      steps_z = tLineal_z(tcp[0], tcp[1], tcp[2], des_tcp[0], des_tcp[1], des_tcp[2], num_pasosv2);
+      // Motor 0
+      _pid[0]->reset(); 
+      p = 0;
+      // Motor 1
+      _pid[1]->reset(); 
+      q = 0;
+      // Motor 2
+      _pid[2]->reset();
+      t = 0;
 
-  temp_M_var = M_var;
-  while (true){
-    if (rotaryEncoder.encoderChanged()) {
-
-      cont=rotaryEncoder.readEncoder();
-      if (cont>cont_pre && M_var < vmaxC) {
-      M_var=M_var+step_cal;   
-
-      }
-
-      if (cont<cont_pre && M_var > vminC){
-
-      M_var=M_var-step_cal;
-
-      }
-      cont_pre=cont;
-      if (SelecMotor == 1) {
-        //motorPinza.write(M_var);
-      } 
-      else if (SelecMotor == 2) {
-       // motorPinza.write(M_var);
-      } 
-      else if (SelecMotor == 3) {
-        //motorPinza.write(M_var);
-      } 
-      else if (SelecMotor == 4) {
-        motorPinza.write(M_var*10);
-      }
-
-      Serial.println(M_var);
-      lcd.setCursor(0, 1);
-      lcd.print("Valor: "+String(M_var) +"     ");
-      //step_cal = 0.1 + abs(cont - cont_pre) * 10000;
-
-    }  
-    if (rotaryEncoder.isEncoderButtonClicked()) {
-
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
-        temp_M_var = M_var; // Guarda el valor final al salir del bucle
-        lastTimePressed = millis();
-        return M_var;
-      }
-    }
-  }
-  contador=0;
-  level_menu=1;
-}
-
-void Modo_Manual_Tusuario(){
-  while (true) {
-    if (rotaryEncoder.isEncoderButtonClicked()) {
-
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
-        
-        lastTimePressed = millis();
-        return;
-      }
-    }
-  }
-}
-
-void Modo_Manual() {
-    while (true) {
-    if (rotaryEncoder.isEncoderButtonClicked()) {
-
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
-        
-        lastTimePressed = millis();
-        return;
-      }
-    }
-    // Lógica para abrir y cerrar la pinza automáticamente
-    for (int angle = 0; angle <= 35; angle++) {
-      motorPinza.write(angle);
+      
+    end_ctrl = 0;
     }
     
-    for (int angle = 35; angle >= 0; angle--) {
-      motorPinza.write(angle);
-    }
-    
-  }
-  contador=0;
-  level_menu=6;
-}
+    pastTcp[0] = des_tcp[0];
+    pastTcp[1] = des_tcp[1];
+    pastTcp[2] = des_tcp[2];
 
-void Modo_Automatico() {
-  while (true) {
-    if (rotaryEncoder.isEncoderButtonClicked()) {
+    // Motor 0
+    desPos[0] = steps_x[p];
+    bool hasOvershot = false;
 
-      //static unsigned long lastTimePressed = 0; // Soft debouncing
-      if (millis() - lastTimePressed >= 500) {
-        Serial.print("button pressed soft");
-        
-        lastTimePressed = millis();
-        return;
+      if(steps_x[p] < steps_x[p+1]) {
+              // Moving in positive direction
+              if(pos[0] > steps_x[p+1]) {
+                  hasOvershot = true;
+              }
+          } else if(steps_x[p] > steps_x[p+1]) {
+              // Moving in negative direction
+              if(pos[0] < steps_x[p+1]) {
+                  hasOvershot = true;
+              }
+          }
+      
+      error_local[0] = abs(pos[0] - steps_x[p]);
+      if(error_local[0] < tol_local || hasOvershot)
+      {
+          p++;
+          if(p == n_steps_x)
+          {
+            p = n_steps_x-1;
+            _pid[0]->reset();
+          }
       }
-    }
-  }
-}
-
-
-// Función para imprimir la matriz en la pantalla LCD
-void imprimirMatrizLCD() {
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Estado de juego:");
-
-  for (int i = 0; i < 3; i++) {
-    lcd.setCursor(0, i + 1); // Cambia de fila
-    for (int j = 0; j < 3; j++) {
-      char characterToPrint;
-      switch (MatrizEstado[i][j]) {
-        case 0:
-          characterToPrint = 'O';
-          break;
-        case 1:
-          characterToPrint = 'X';
-          break;
-        case 2:
-          characterToPrint = '-';
-          break;
-      }
-      lcd.print(characterToPrint);
-      lcd.print(" "); // Espacio entre caracteres
-    }
-  }
-}
-//Funcion para manejar los menus y submenus de la interfaz
-void Robot_Menu() {
-  if(EmergencyPressed){
-    showEmergencyMessage();
-    return;
-  }
-  // Muestra el menú correspondiente según el nivel actual si ha cambiado
-  if (contador != last_contador || level_menu != last_level_menu) {
-    last_contador = contador;
-    last_level_menu = level_menu;
-
-    switch (level_menu) {
-      case 0: // Menu Principal
-        global_sizemenu = sizemenu1;
-        fn_menu(contador, menu1, sizemenu1, "MENU PRINCIPAL");
-        Serial.println(sizemenu1);
-        break;
-
-      case 1: // SubMenu Calibracion
-        //digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
-        global_sizemenu = sizemenu2;
-        fn_menu(contador, menu2, sizemenu2, "MENU CALIBRACION");
-        break;
-
-      case 2: // SubMenu Modo Automatico
-        //digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
-        global_sizemenu = sizemenu3;
-        fn_menu(contador, menu3, sizemenu3, "MENU M.AUTOMATICO");
-        break;
-
-      case 3: // SubMenu Empezar del Modo Automatico
-        global_sizemenu = sizemenu4;
-        fn_menu(contador, menu4, sizemenu4, "MENU M.AUTOMATICO");
-        break;
-
-      case 4: // SubMenu Modo Manual
-        //digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
-        global_sizemenu = sizemenu3;
-        fn_menu(contador, menu3, sizemenu3, "MENU M.MANUAL");
-        break;
-
-      case 5: // SubMenu Empezar del Modo Manual
-        global_sizemenu = sizemenu4;
-        fn_menu(contador, menu4, sizemenu4, "MENU M.MANUAL");
-        break;
-
-      case 6: // SubMenu Empezar del Modo Manual (detallado)
-       // digitalWrite(LED_VERDE, LOW);
-        //digitalWrite(LED_ROJO, LOW);
-        global_sizemenu = sizemenu5;
-        fn_menu1(contador, menu5, sizemenu5, "MENU M.MANUAL");
-        break;
       
-      case 7: // SubMenu Conexion
-        global_sizemenu = sizemenu6;
-        fn_menu(contador, menu6, sizemenu6, "MENU CONEXION");
-        break;
-      
-    }
+      dutyCycle[0] = _pid[0]->calc(pos[0], steps_x[p]);
+      _m[0]->SetDuty(dutyCycle[0]);
+
+    // Motor 1
+    desPos[1] = steps_y[q];
     
-  }
+    hasOvershot = false;
 
-  // Maneja la lógica de los botones cuando se presiona el botón
-  if (btnpress) {
-    switch (level_menu) {
+      if(steps_y[q] < steps_y[q+1]) {
+              // Moving in positive direction
+              if(pos[1] > steps_y[q+1]) {
+                  hasOvershot = true;
+              }
+          } else if(steps_y[q] > steps_y[q+1]) {
+              // Moving in negative direction
+              if(pos[1] < steps_y[q+1]) {
+                  hasOvershot = true;
+              }
+          }
       
-      case 0: // Menu Principal
-        switch (contador) {
-          case 0: // Calibracion
-            contador = 0;
-            level_menu = 1;
-            break;
-          case 1: // Modo Automatico
-            contador = 0;
-            level_menu = 2;
-            break;
-          case 2: // Modo Manual
-            contador = 0;
-            level_menu = 4;
-            break;
-          case 3: // Comunicacion 
-            contador = 0;
-            level_menu = 7;
-            break;
-        }
-        break;
-
-      case 1: // SubMenu Calibracion
-        switch (contador) {
-          case 0: // Motor Base
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("CALIBRAR BASE       ");
-            M_Base=calibration(M_Base,-20,20,1);
-            break;
-          case 1: // Motor Hombro
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("CALIBRAR HOMBRO     ");
-            M_Hombro=calibration(M_Hombro,0,27,2);
-            break;
-          case 2: // Motor Codo
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("CALIBRAR M.CODO      ");
-            M_Codo=calibration(M_Codo,65,100,3);
-            break;
-          case 3: // Pinza
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("CALIBRAR PINZA       ");
-            M_Pinza=calibration(M_Pinza,0,180,4);
-            break;
-          case 4: // Atras
-            contador = 0;
-            level_menu = 0;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, HIGH);
-            break;
-        }
-        break;
-
-      case 2: // SubMenu Modo Automatico
-        switch (contador) {
-          case 0: // Empezar
-            contador = 0;
-            level_menu = 3;
-            break;
-          case 1: // Atras
-            contador = 1;
-            level_menu = 0;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, HIGH);
-            break;
-        }
-        break;
-
-      case 3: // SubMenu Empezar del Modo Automatico
-        switch (contador) {
-          case 0: // T. Usuario
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO USUARIO");
-            lcd.setCursor(0, 1);
-            lcd.print("Mueve una ficha");
+      error_local[1] = abs(pos[1] - steps_y[q]);
+      if(error_local[1] < tol_local || hasOvershot)
+      {
+          q++;
+          if(q == n_steps_y)
+          {
+            q = n_steps_y-1;
+            _pid[1]->reset();
+          }
+      }
+      
+      dutyCycle[1] = _pid[1]->calc(pos[1], steps_y[q]);
+      _m[1]->SetDuty(dutyCycle[1]);
             
-            //digitalWrite(LED_ROJO, ledRojoEncendido ? HIGH : LOW);
-            //digitalWrite(LED_VERDE, LOW);
-            break;
-          case 1: // T. Robot
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT");
-            lcd.setCursor(0, 1);
-            lcd.print("Robot jugando");
-            //digitalWrite(LED_VERDE, HIGH);
-            //digitalWrite(LED_ROJO, LOW);
-            break;
-          case 2: // Atras
-            contador = 0;
-            level_menu = 2;
-            //digitalWrite(LED_VERDE, LOW);
-            //digitalWrite(LED_ROJO, LOW);
-            break;
-        }
-        break;
+    // Motor 2
+    desPos[2] = steps_z[t];
 
-      case 4: // SubMenu Modo Manual
-        switch (contador) {
-          case 0: // Empezar
-            contador = 0;
-            level_menu = 5;
-            break;
-          case 1: // Atras
-            contador = 2;
-            level_menu = 0;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, HIGH);
-            break;
-        }
-        break;
+    hasOvershot = false;
 
-      case 5: // SubMenu Empezar del Modo Manual
-        switch (contador) {
-          case 0: // T. Usuario
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO USUARIO");
-            lcd.setCursor(0, 1);
-            lcd.print("Mueve una ficha");
-            Modo_Manual_Tusuario();
-            contador = 0;
-            level_menu = 6;
-            //digitalWrite(LED_ROJO, HIGH);
-            //digitalWrite(LED_VERDE, LOW);
-            break;
-          case 1: // T. Robot
-            contador = 0;
-            level_menu = 6;
-            //digitalWrite(LED_VERDE, HIGH);
-            //digitalWrite(LED_ROJO, LOW);
-            break;
-          case 2: // Atras
-            contador = 0;
-            level_menu = 4;
-            //digitalWrite(LED_VERDE, LOW);
-            //digitalWrite(LED_ROJO, LOW);
-            break;
-        }
-        break;
+      if(steps_z[t] < steps_z[t+1]) {
+              // Moving in positive direction
+              if(pos[2] > steps_z[t+1]) {
+                  hasOvershot = true;
+              }
+          } else if(steps_z[t] > steps_z[t+1]) {
+              // Moving in negative direction
+              if(pos[2] < steps_z[t+1]) {
+                  hasOvershot = true;
+              }
+          }
       
-      case 6: // SubMenu T.ROBOT Modo Manual
-        switch (contador) {
-          case 0: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 1");
-            Modo_Manual(); 
-            break;
-          case 1: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 2");
-            Modo_Manual(); 
-            break;
-          case 2:
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 3");
-            Modo_Manual(); 
-            break;
-          case 3: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 4");
-            Modo_Manual(); 
-            break;
-          case 4: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 5");
-            Modo_Manual(); 
-            break;
-          case 5: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 6");
-            Modo_Manual(); 
-            break;
-          case 6: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 7");
-            Modo_Manual(); 
-            break;
-          case 7: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 8");
-            Modo_Manual(); 
-            break;
-          case 8: 
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("TURNO ROBOT"); 
-            lcd.setCursor(0, 1); 
-            lcd.print("Posicion 9");
-            Modo_Manual(); 
-            break;
-          case 9:
-            contador = 1;
-            level_menu = 5;
-            //digitalWrite(LED_VERDE, LOW);
-            //digitalWrite(LED_ROJO, LOW);
-            break;
-        }
-        break;
-
-      case 7: //===============================================================================menu etsado
-        switch (contador) {
-          case 0: // Conexion
-          Fn_MatrizState();
-          imprimirMatrizLCD();
-
-
-
-            break;
-          case 1: // T. Robot
-            contador = 0;
-            level_menu = 0;
-            //digitalWrite(LED_VERDE, HIGH);
-            //digitalWrite(LED_ROJO, LOW);
-            break;
-        }
-        break;
-
-
-    }
-    btnpress = false;
-  }
-}
-
-
-
-void setup()
-{
-  // WIFI CONECTION
-  Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
-
-  pinMode(buttonPin, INPUT_PULLUP); // Configurar el pin del botón
-  pinMode(EmergencyButton, INPUT_PULLUP);
-   // Configura la interrupción para detectar cambios en el pin del botón
-  attachInterrupt(digitalPinToInterrupt(EmergencyButton), Fn_Emergency, CHANGE);
-
-  //we must initialize rotary encoder
-  rotaryEncoder.begin();
-  rotaryEncoder.setup(readEncoderISR);
-  bool circleValues = false;
-  rotaryEncoder.setBoundaries(0, 1000, true); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
-  rotaryEncoder.setAcceleration(100); //or set the value - larger number = more accelearation; 0 or 1 means disabled acceleration
-  Serial.println("Initialized");
-
-  //LCD
-  Wire.begin(PIN_SDA, PIN_SCL);
-  lcd.init();
-  lcd.backlight(); //Encender la luz de fondo.
-  lcd.createChar(0, flecha); 
-
-  //Iniciar en menu principal
-  fn_menu(contador, menu1, sizemenu1, "MENU PRINCIPAL"); //Iniciamos presentando el menu principal 
-  //Servomotor
-  motorPinza.attach(MOTOR_PINZA_PIN);
-}
-
-void loop()
-{
-  //in loop call your custom function which will process rotary encoder values
-  rotary_loop();
-  Robot_Menu();
-
-
-  buttonState = digitalRead(buttonPin);
-
-  if (buttonState == LOW) { // Si el botón es presionado
-     Fn_MatrizState(); // Llamamos a la función MatrizState y almacenamos el resultado en MatrizEstado
-     Serial.println("Loop:");
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        Serial.print(MatrizEstado[i][j]);
-         Serial.print(" ");
+      error_local[2] = abs(pos[2] - steps_z[t]);
+      if(error_local[2] < tol_local || hasOvershot)
+      {
+          t++;
+          if(t == n_steps_z)
+          {
+            t = n_steps_z-1;
+            _pid[2]->reset();
+          }
       }
-      Serial.println();
-    }
-  }
- // Serial.println(EmergencyPressed);
+      
+      dutyCycle[2] = _pid[2]->calc(pos[2], steps_z[t]);
+      _m[2]->SetDuty(dutyCycle[2]);
 
- if(EmergencyPressed)
- {
-  Serial.print("Emergency stop");
+      if(counter == 16)
+      {
+        counter = 0;
+      }
+      else
+      {
+        counter++;
+      }
+      
+}
+
+void setup() {
+   // Inicializamos el timer
+  timer = timerBegin(0, 80, true);                // Timer 0, clock divider 80
+  timerAttachInterrupt(timer, &timerCtrl, true);  // Attach the interrupt handling function
+  timerAlarmWrite(timer, 1000000*dt, true);       // Interrupt every 1 second
+  timerAlarmEnable(timer);                        // Enable the alarm
+
+  // Inicializamos el puerto serial
+  Serial.begin(115200);
+  // Inicializamos el puerto serial para los comandos
+  // Comando por defecto para comandos no reconocidos
+  cmd.SetDefaultHandler(cmd_unrecognized);
+  // Registramos los comandos para el puerto serial abierto
+  cmd.AddCommand(&cmd_set_debug_);
+  cmd.AddCommand(&cmd_set_led1_);
+  cmd.AddCommand(&cmd_set_led2_);
+  // Motores
+  cmd.AddCommand(&cmd_set_motor_pos_);
+  cmd.AddCommand(&cmd_set_encoder_zero_);
+  cmd.AddCommand(&cmd_set_motor_kp_);
+  cmd.AddCommand(&cmd_set_motor_ki_);
+  cmd.AddCommand(&cmd_set_motor_kd_);
+  cmd.AddCommand(&cmd_get_encoder_deg_);
+  cmd.AddCommand(&cmd_get_encoders_deg_);
+  cmd.AddCommand(&cmd_get_motor_info_);
+  // TCP
+  cmd.AddCommand(&cmd_set_tcp_);
+  cmd.AddCommand(&cmd_get_tcp_);
+  cmd.AddCommand(&cmd_goto_);
+  cmd.AddCommand(&cmd_goZ_);
+  cmd.AddCommand(&cmd_goSafe_);
+  cmd.AddCommand(&cmd_goHome_);
+  // Gripper
+  cmd.AddCommand(&cmd_openGripper_);
+  cmd.AddCommand(&cmd_closeGripper_);
+
+  cmd.AddCommand(&cmd_moverPieza_);
+
+  motorPinza.attach(MOTOR_PINZA_PIN);
+
+  // LEDS
+  pinMode(led_1, OUTPUT);
+  pinMode(led_2, OUTPUT);
+
+  analogWrite(led_1, 0);
+  analogWrite(led_2, 0);
+  
+  // Inicializamos los encoders
+  _enc = new AlMar::Esp32::EncoderATM203_Spi2(cs_pins,N_MOTORS,PIN_MOSI,PIN_MISO,PIN_SCLK);
+  
+  // Recorremos todos los motores existe en el array motor
+  for(int i = 0; i < N_MOTORS; i++)
+  {
+    // Inicializamos el motor
+    _m[i] = new AlMar::Esp32::Driver_L298n(motor[i][0], motor[i][1], motor[i][2], motor[i][3]);
+    _m[i]->begin();
+    // Inicializamos el control
+    _pid[i] = new PID(motor[i][4], motor[i][5], motor[i][6]);
+    _pid[i]->setdt(dt);
+    _pid[i]->setRange(motor[i][7], motor[i][8]);
+    _pid[i]->setWindup(motor[i][9]);
+
+    // Primera posición anterior para inicio fuera de origen
+    //pastPos[i] = (float) _enc->Read(i)*(360.0/4096.0);
+  }
+
+  // Calculamos la corrección del error de los encoders para la posición 5
+  nums temp = FnInvKinem(0, 330, -145);
+  origin[0] = temp.uno;
+  origin[1] = temp.dos;
+  origin[2] = temp.tres;
+
+  pos[0] = (float) _enc->Read(0)*(360.0/4096.0);
+  pos[1] = (float) _enc->Read(1)*(360.0/4096.0);      
+  pos[2] = (float) _enc->Read(2)*(360.0/4096.0);
+
+  nums curr_tcp = FnDirKinem(pos[0], pos[1], pos[2]);
+  tcp[0] = curr_tcp.uno;
+  tcp[1] = curr_tcp.dos;
+  tcp[2] = curr_tcp.tres;
+
+  des_tcp[0] = tcp[0];
+  des_tcp[1] = tcp[1];
+  des_tcp[2] = tcp[2];
+
+  pastTcp[0] = des_tcp[0];
+  pastTcp[1] = des_tcp[1];
+  pastTcp[2] = des_tcp[2];
+  
+  init_ctrl = 1;
+}
+
+void loop() {
+  cmd.ReadSerial();
+  
+  if(ctrl)
+  {
+    
+    Serial.printf(">estado: %i\n", estado);
+    Serial.printf(">n_steps_x: %i\n", n_steps_x-1);
+    Serial.printf(">n_steps_y: %i\n", n_steps_y-1);
+    Serial.printf(">n_steps_z: %i\n", n_steps_z-1);
+    Serial.printf(">p: %i\n", p);
+    Serial.printf(">q: %i\n", q);
+    Serial.printf(">t: %i\n", t);
+
+
+    for(int i = 0; i < N_MOTORS; i++)
+    {
+      if(i == 0 || i == 1 || i == 2)
+      {
+        Serial.printf(">pos[%i]: %f\n", i, pos[i]);
+        Serial.printf(">desPos[%i]: %f\n", i, desPos[i]);
+        Serial.printf(">error_global[%i]: %f\n", i, error_global[i]);
+        Serial.printf(">error_local[%i]: %f\n", i, error_local[i]);
+        Serial.printf(">error[%i]: %f\n", i, _pid[i]->_error);
+        Serial.printf(">P[%i]:%f\n", i, _pid[i]->__P);
+        Serial.printf(">I[%i]:%f\n", i, _pid[i]->_I);
+        Serial.printf(">D[%i]:%f\n", i, _pid[i]->_D);
+        Serial.printf(">PID[%i]:%f\n", i, _pid[i]->_PID);
+      }
+    }
+
+    Serial.printf(">tcp[x]: %f\n", tcp[0]);
+    Serial.printf(">tcp[y]: %f\n", tcp[1]);
+    Serial.printf(">tcp[z]: %f\n", tcp[2]);
+    Serial.printf(">des_tcp[x]: %f\n", des_tcp[0]);
+    Serial.printf(">des_tcp[y]: %f\n", des_tcp[1]);
+    Serial.printf(">des_tcp[z]: %f\n", des_tcp[2]);
+
+    /*while(p > 0)
+    {
+      end_ctrl = false;
+    }
+    end_ctrl = true;*/
+
+    if(p == n_steps_x-1 && q == n_steps_y-1 && t == n_steps_z-1)
+    {
+      end_ctrl = 1;
+    }
+
+    Serial.printf(">end_ctrl: %i\n", end_ctrl);
+    ctrl = false;
+    moverPieza(ficha, posicion);
+    Serial.printf(">ficha: %i\n", ficha);
+    Serial.printf(">posicion: %i\n", posicion);
   }
 
 
 }
+  
