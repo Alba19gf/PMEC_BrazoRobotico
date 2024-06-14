@@ -699,7 +699,11 @@ void Robot_Menu() {
         final_position = global_position;
         break;
 
+<<<<<<< HEAD
       case 7: //SubMenu Comunicación.
+=======
+      case 7: //===============================================================================menu essado
+>>>>>>> a7ed23bef91a43a5559051f270f7864daf929d27
         switch (contador) {
           case 0: // Conexion
             Fn_MatrizState();
