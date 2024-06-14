@@ -362,7 +362,7 @@ void Modo_Automatico_Tusuario_Dificil() {
 //   }
 // }
 
-void ComandoMovimiento(int position,int piece)     //ficha 0 para azul         1 para rosa
+void ComandoMovimiento(int position,int ficha)     //ficha 0 para azul         1 para rosa
 {
   if (position < 10 && position != final_position)
   {
@@ -396,7 +396,7 @@ void ComandoMovimiento(int position,int piece)     //ficha 0 para azul         1
       return;
     }
 
-  int from=Movefrom(piece);
+  int from=Movefrom(ficha);
   //Serial.println(from);
   //Serial.print("Mover a la posicion:");
   //Serial.println(global_position);
@@ -699,7 +699,11 @@ void Robot_Menu() {
         final_position = global_position;
         break;
 
+<<<<<<< HEAD
       case 7: //SubMenu Comunicación.
+=======
+      case 7: //===============================================================================menu essado
+>>>>>>> a7ed23bef91a43a5559051f270f7864daf929d27
         switch (contador) {
           case 0: // Conexion
             Fn_MatrizState();
